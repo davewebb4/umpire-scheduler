@@ -202,6 +202,7 @@ function us_settings_page() {
                     'slug_allocator_past_games'       => [ 'label' => 'Allocator past games',      'shortcode' => '[allocator_past_games]' ],
                     'slug_allocator_tournament_games' => [ 'label' => 'Tournament management',     'shortcode' => '[tournament_management]' ],
                     'slug_allocator_umpire_history'   => [ 'label' => 'Umpire history',            'shortcode' => '[allocator_umpire_history]' ],
+                    'slug_allocator_broadcast'        => [ 'label' => 'Broadcast message',         'shortcode' => '[allocator_broadcast]' ],
                 ];
                 $base = trailingslashit( home_url() );
                 foreach ( $slug_fields as $key => $info ) :
@@ -418,6 +419,7 @@ function us_save_settings() {
         'slug_allocator_past_games'       => 'sanitize_title',
         'slug_allocator_tournament_games' => 'sanitize_title',
         'slug_allocator_umpire_history'   => 'sanitize_title',
+        'slug_allocator_broadcast'        => 'sanitize_title',
         'email_footer'                    => 'sanitize_text_field',
     ];
 
@@ -468,6 +470,7 @@ function us_get_settings() {
         'slug_allocator_past_games'       => 'allocator-past-games',
         'slug_allocator_tournament_games' => 'tournament-management',
         'slug_allocator_umpire_history'   => 'allocator-umpire-history',
+        'slug_allocator_broadcast'        => 'allocator-broadcast',
         'email_footer'                    => 'Umpire Scheduler',
     ];
 

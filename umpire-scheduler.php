@@ -58,6 +58,7 @@ require_once US_PATH . 'includes/allocator/allocator-dashboard.php';
 require_once US_PATH . 'includes/allocator/allocator-games.php';
 require_once US_PATH . 'includes/allocator/allocator-tournaments.php';
 require_once US_PATH . 'includes/allocator/allocator-past-games.php';
+require_once US_PATH . 'includes/allocator/allocator-broadcast.php';
 require_once US_PATH . 'includes/allocator/allocator-pay-reports.php';
 require_once US_PATH . 'includes/allocator/allocator-umpire-history.php';
 require_once US_PATH . 'includes/allocator/xlsx-export.php';

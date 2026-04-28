@@ -93,6 +93,7 @@ function us_wizard_create_pages() {
         'allocator-past-games'   => [ 'title' => 'Past Games',              'shortcode' => '[allocator_past_games]',    'setting' => 'slug_allocator_past_games' ],
         'tournament-management'  => [ 'title' => 'Tournament Management',   'shortcode' => '[tournament_management]',   'setting' => 'slug_allocator_tournament_games' ],
         'allocator-umpire-history' => [ 'title' => 'Umpire History',        'shortcode' => '[allocator_umpire_history]','setting' => 'slug_allocator_umpire_history' ],
+        'allocator-broadcast'      => [ 'title' => 'Broadcast Message',     'shortcode' => '[allocator_broadcast]',     'setting' => 'slug_allocator_broadcast' ],
     ];
 
     $settings = get_option( 'us_settings', [] );
@@ -270,6 +271,7 @@ function us_wizard_render( $step ) {
                     'Past Games'             => '[allocator_past_games]',
                     'Tournament Management'  => '[tournament_management]',
                     'Umpire History'         => '[allocator_umpire_history]',
+                    'Broadcast Message'      => '[allocator_broadcast]',
                 ];
                 foreach ( $pages as $title => $shortcode ) :
                 ?>
