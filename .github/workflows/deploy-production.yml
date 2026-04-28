@@ -22,6 +22,7 @@ jobs:
           username: ${{ secrets.PROD_FTP_USERNAME }}
           password: ${{ secrets.PROD_FTP_PASSWORD }}
           server-dir: /wp-content/plugins/umpire-scheduler/
+          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
