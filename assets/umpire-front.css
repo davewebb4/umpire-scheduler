@@ -536,6 +536,14 @@ body.us-page {
 
 .us-login-forgot:hover { text-decoration: underline; }
 
+.us-login-version {
+    text-align: center;
+    font-size: 11px;
+    color: var(--us-text-muted);
+    margin-top: 12px;
+    opacity: 0.6;
+}
+
 .us-login-notice {
     margin-bottom: 16px;
 }

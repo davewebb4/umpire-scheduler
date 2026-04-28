@@ -31,6 +31,7 @@ function us_login_form() {
                 <a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" class="us-login-forgot">Forgot your password?</a>
             </form>
         </div>
+        <p class="us-login-version">v<?php echo US_VERSION; ?></p>
     </div>
     <?php
     return ob_get_clean();
