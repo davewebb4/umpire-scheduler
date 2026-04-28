@@ -40,9 +40,9 @@ function us_login_form() {
                 </div>
                 <button type="submit" name="us_login_submit" class="us-login-btn">Sign in</button>
                 <a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" class="us-login-forgot">Forgot your password?</a>
+                <p class="us-login-version">v<?php echo US_VERSION; ?></p>
             </form>
         </div>
-        <p class="us-login-version">v<?php echo US_VERSION; ?></p>
     </div>
     <?php
     return ob_get_clean();
