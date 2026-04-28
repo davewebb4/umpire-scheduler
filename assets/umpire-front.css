@@ -489,6 +489,20 @@ body.us-page {
     margin-bottom: 16px;
 }
 
+.us-login-logo:has(.us-login-logo__img) {
+    background: none;
+    padding: 0;
+}
+
+.us-login-logo__img {
+    max-width: 180px;
+    max-height: 80px;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: 0 auto 16px;
+}
+
 .us-login-title {
     font-size: 24px;
     font-weight: 700;

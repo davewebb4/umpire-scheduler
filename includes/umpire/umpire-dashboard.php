@@ -7,9 +7,21 @@ function us_login_form() {
 
     ob_start();
     ?>
+    <?php
+    $logo_id  = get_theme_mod( 'custom_logo' );
+    $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+    ?>
     <div class="us-login-wrap">
         <div class="us-login-card">
-            <div class="us-login-logo"><?php echo esc_html( us_setting( 'org_short' ) ); ?></div>
+            <div class="us-login-logo">
+                <?php if ( $logo_url ) : ?>
+                    <img src="<?php echo esc_url( $logo_url ); ?>"
+                         alt="<?php echo esc_attr( us_setting( 'org_short' ) ); ?>"
+                         class="us-login-logo__img">
+                <?php else : ?>
+                    <?php echo esc_html( us_setting( 'org_short' ) ); ?>
+                <?php endif; ?>
+            </div>
             <h2 class="us-login-title"><?php echo esc_html( us_setting( 'app_title' ) ); ?></h2>
             <p class="us-login-sub">Sign in to access your schedule</p>
 
