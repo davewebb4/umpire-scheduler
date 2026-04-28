@@ -1,9 +1,6 @@
 name: Deploy to GVSU.CA
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
