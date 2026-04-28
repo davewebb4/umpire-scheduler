@@ -1,0 +1,676 @@
+/* ── Dashboard sections ────────────────────────────────────── */
+.us-dashboard h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--us-primary);
+    margin-bottom: 24px;
+}
+
+.us-dashboard h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--us-primary);
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--us-secondary);
+}
+
+/* ── Stat cards ────────────────────────────────────────────── */
+.us-stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.us-stat-card {
+    background: var(--us-surface);
+    border-radius: var(--us-radius-lg);
+    padding: 16px 20px;
+    box-shadow: var(--us-shadow-sm);
+    border-top: 3px solid var(--us-primary);
+}
+
+.us-stat-card--pending { border-top-color: var(--us-secondary); }
+.us-stat-card--danger  { border-top-color: var(--us-danger); }
+.us-stat-card--accent  { border-top-color: var(--us-accent); }
+
+.us-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--us-primary);
+    line-height: 1.2;
+}
+
+.us-stat-value--pending { color: var(--us-secondary); }
+.us-stat-value--danger  { color: var(--us-danger); }
+.us-stat-value--accent  { color: var(--us-accent); }
+
+.us-stat-label {
+    font-size: 12px;
+    color: var(--us-text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* ── Tables ────────────────────────────────────────────────── */
+.us-dashboard table,
+.us-dashboard table th,
+.us-dashboard table td,
+.us-dashboard table tr {
+    border: none;
+    box-shadow: none;
+    outline: none;
+}
+
+.us-dashboard table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    font-size: 14px;
+    background: var(--us-surface);
+    border-radius: var(--us-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--us-shadow-sm);
+}
+
+.us-dashboard table thead tr {
+    background: var(--us-primary);
+    color: #fff;
+    text-align: left;
+}
+
+.us-dashboard table th {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: .03em;
+    color: #fff;
+    text-align: left;
+}
+
+.us-dashboard table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--us-border);
+    color: var(--us-text);
+    vertical-align: middle;
+}
+
+.us-dashboard table tbody tr:last-child td { border-bottom: none; }
+.us-dashboard table tbody tr:hover { background: #f0f5fa; }
+
+.us-earnings-total td {
+    font-weight: 700;
+    background: #f8fafc;
+    border-top: 2px solid var(--us-border);
+}
+
+/* ── Assignment waiting label ──────────────────────────────── */
+.us-assignment-waiting {
+    font-size: 12px;
+    color: var(--us-text-muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* ── Profile grid ──────────────────────────────────────────── */
+.us-profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 640px) {
+    .us-profile-grid { grid-template-columns: 1fr; }
+}
+
+.us-profile-card {
+    background: var(--us-surface);
+    border-radius: var(--us-radius-lg);
+    padding: 20px;
+    box-shadow: var(--us-shadow-sm);
+}
+
+.us-profile-card h4 {
+    margin: 0 0 16px;
+    color: var(--us-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.us-profile-email {
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--us-text-muted);
+}
+
+.us-profile-email strong {
+    display: block;
+    color: var(--us-primary);
+    margin-bottom: 2px;
+}
+
+.us-profile-email-note {
+    font-size: 11px;
+    color: var(--us-text-light);
+    margin-left: 4px;
+}
+
+/* ── Unavailable dates list ────────────────────────────────── */
+.us-unavail-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.us-unavail-list__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+.us-unavail-list__item:last-child { border-bottom: none; }
+.us-unavail-list__dot { color: var(--us-danger); flex-shrink: 0; }
+
+/* ── Earnings section heading ──────────────────────────────── */
+.us-earnings-section-heading {
+    margin-top: 0 !important;
+    border-bottom-color: var(--us-primary) !important;
+}
+
+/* ── Schedule iCal row ─────────────────────────────────────── */
+.us-schedule-ical {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.us-schedule-ical__hint {
+    font-size: 12px;
+    color: var(--us-text-muted);
+}
+
+/* ── League filter bar ─────────────────────────────────────── */
+.us-league-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.us-league-filter__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--us-primary);
+}
+
+/* ── Mobile responsive tables ──────────────────────────────── */
+@media (max-width: 640px) {
+    .us-dashboard table thead { display: none; }
+
+    .us-dashboard table tbody tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--us-border);
+        border-radius: var(--us-radius-lg);
+        overflow: hidden;
+        background: var(--us-surface);
+    }
+
+    .us-dashboard table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 13px;
+        min-height: 44px;
+    }
+
+    .us-dashboard table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--us-primary);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        min-width: 100px;
+        flex-shrink: 0;
+    }
+
+    .us-dashboard table td:last-child {
+        border-bottom: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        padding: 10px 14px;
+    }
+
+    .us-dashboard table td:last-child::before { margin-bottom: 4px; }
+
+    .us-dashboard table td:last-child .us-btn {
+        width: 100%;
+        text-align: center;
+        margin-right: 0;
+        font-size: 14px;
+        min-height: var(--us-btn-min-height);
+        justify-content: center;
+    }
+
+    .us-page-wrap { padding: 16px 12px; }
+}
+
+/* ── Open games cards ──────────────────────────────────────── */
+.us-game-cards {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+}
+
+@media (max-width: 640px) {
+    .us-game-cards {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.us-game-card {
+    display: flex !important;
+    background: var(--us-surface) !important;
+    border-radius: var(--us-radius-lg) !important;
+    box-shadow: var(--us-shadow-sm) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--us-border) !important;
+    transition: box-shadow var(--us-transition) !important;
+}
+
+.us-game-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+/* Date strip — left */
+.us-game-card__date-strip {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--us-primary) !important;
+    color: #fff !important;
+    padding: 16px 14px !important;
+    min-width: 76px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+}
+
+.us-game-card__day {
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .08em !important;
+    color: var(--us-secondary) !important;
+    margin-bottom: 2px !important;
+}
+
+.us-game-card__date {
+    display: block !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    color: #fff !important;
+}
+
+.us-game-card__year {
+    display: block !important;
+    font-size: 11px !important;
+    color: rgba(255,255,255,0.5) !important;
+    margin-top: 2px !important;
+}
+
+/* Body — info left, actions right */
+.us-game-card__body {
+    flex: 1 !important;
+    padding: 16px 18px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+}
+
+.us-game-card__info {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+}
+
+.us-game-card__matchup {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: var(--us-primary) !important;
+    line-height: 1.3 !important;
+}
+
+.us-game-card__meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px 14px !important;
+    align-items: center !important;
+}
+
+.us-game-card__meta-item {
+    font-size: 13px !important;
+    color: var(--us-text-muted) !important;
+}
+
+.us-game-card__meta-item--time {
+    color: var(--us-secondary) !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+}
+
+.us-game-card__actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    align-items: flex-end !important;
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 480px) {
+    .us-game-card__body {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .us-game-card__actions {
+        align-items: stretch !important;
+    }
+    .us-game-card__actions .us-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+}
+
+/* ── Schedule card status badges ───────────────────────────── */
+.us-game-card__status-badge {
+    display: inline-block !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    white-space: nowrap !important;
+}
+
+.us-game-card__status-badge--confirmed {
+    background: #ecfdf5 !important;
+    color: var(--us-accent) !important;
+}
+
+.us-game-card__status-badge--pending {
+    background: #eff6ff !important;
+    color: var(--us-secondary) !important;
+}
+
+/* ── Open games list (req-card style) ──────────────────────── */
+
+.us-open-game-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.us-og-card {
+    background: var(--us-surface);
+    border-radius: var(--us-radius-lg);
+    box-shadow: var(--us-shadow-sm);
+    border: 1px solid var(--us-border);
+    overflow: hidden;
+}
+
+.us-og-card--dh {
+    border-left: 4px solid var(--us-warning);
+}
+
+/* Header row — date + info + actions in a line */
+.us-og-card__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+}
+
+/* Date block */
+.us-og-card__date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--us-primary);
+    color: #fff;
+    border-radius: var(--us-radius-md);
+    padding: 8px 12px;
+    min-width: 52px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.us-og-card__date-day {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--us-secondary);
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.us-og-card__date-num {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.us-og-card__date-year {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 2px;
+    line-height: 1;
+}
+
+/* Info block */
+.us-og-card__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.us-og-card__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--us-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.us-og-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 13px;
+    color: var(--us-text-muted);
+}
+
+.us-og-card__meta-time {
+    color: var(--us-secondary);
+    font-weight: 600;
+}
+
+/* DH badge in title */
+.us-og-card__dh-badge {
+    display: inline-block;
+    background: var(--us-warning);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 2px 6px;
+    border-radius: var(--us-radius-sm);
+    line-height: 1.4;
+}
+
+/* Header actions — buttons for single game cards */
+.us-og-card__header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* ── Doubleheader game rows ──── */
+.us-og-card__divider {
+    border-top: 1px dashed var(--us-border);
+    margin: 0 18px;
+}
+
+.us-og-card__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px;
+}
+
+.us-og-card__row-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.us-og-card__row-matchup {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--us-primary);
+}
+
+.us-og-card__row-time {
+    font-size: 13px;
+    color: var(--us-secondary);
+    font-weight: 600;
+}
+
+.us-og-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* ── Buttons ── */
+.us-og-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    border-radius: var(--us-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    transition: opacity var(--us-transition);
+    min-height: 36px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.us-og-btn:hover { opacity: .85; }
+
+.us-og-btn--request {
+    background: var(--us-secondary);
+    color: #fff !important;
+}
+
+.us-og-btn--pending {
+    background: #e8f0f8;
+    color: var(--us-secondary) !important;
+    cursor: default;
+    font-size: 12px;
+}
+
+.us-og-btn--cancel {
+    background: var(--us-danger);
+    color: #fff !important;
+}
+
+@media (max-width: 480px) {
+    .us-og-card__header {
+        flex-wrap: wrap;
+    }
+    .us-og-card__header-actions {
+        width: 100%;
+        padding-left: 68px; /* align under info, past the date block */
+    }
+    .us-og-card__row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .us-og-card__actions {
+        width: 100%;
+    }
+    .us-og-btn--request,
+    .us-og-btn--cancel {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ── og-card schedule variants ─────────────────────────────── */
+
+.us-og-card--today {
+    border-left: 3px solid var(--us-secondary);
+}
+
+.us-og-card__date--today {
+    background: var(--us-secondary);
+}
+
+.us-og-card__today-badge {
+    display: inline-block;
+    background: var(--us-secondary);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 2px 6px;
+    border-radius: var(--us-radius-sm);
+    line-height: 1.4;
+}
+
+.us-og-btn--confirm {
+    background: var(--us-accent);
+    color: #fff !important;
+}
+
+.us-og-btn--confirmed {
+    background: #ecfdf5;
+    color: var(--us-accent) !important;
+    cursor: default;
+    font-size: 12px;
+    font-weight: 600;
+}

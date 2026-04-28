@@ -1,0 +1,571 @@
+/* =====================================================================
+   umpire-admin.css
+   Admin-only styles for the Umpire Scheduler plugin.
+   Enqueued on all us_* post type screens and plugin admin pages.
+   Prefix: us-admin-  (BEM: us-admin-component__element--modifier)
+   ===================================================================== */
+
+/* ── Shared meta box primitives ───────────────────────────── */
+
+/* Checkbox rows — replaces style="display:flex;align-items:center;gap:8px;cursor:pointer" */
+.us-admin-meta__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.us-admin-meta__checkbox {
+    width: 15px;
+    height: 15px;
+}
+
+/* Number/pay rate inputs — replaces style="width:120px" */
+.us-admin-meta__rate-input {
+    width: 120px;
+}
+
+/* Hidden rows — toggled by JS, replaces style="display:none" on initial render */
+.us-admin-meta__row--hidden {
+    display: none;
+}
+
+/* Inline notice spacing (league pay re-apply) */
+.us-admin-meta__inline-notice {
+    margin-bottom: 16px;
+}
+
+/* Re-apply button column */
+.us-admin-meta__reapply-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.us-admin-meta__reapply-desc {
+    margin-top: 4px;
+}
+
+/* ── League meta box ──────────────────────────────────────── */
+
+/* Tournament date range row — start/end side by side */
+.us-admin-meta__date-range {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Small uppercase sublabels above date inputs */
+.us-admin-meta__sublabel {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #091b33;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+/* ── Umpire details meta box ──────────────────────────────── */
+
+/* WP account linked state */
+.us-admin-meta__linked {
+    color: #00a32a;
+}
+
+.us-admin-meta__unlinked {
+    color: #999;
+}
+
+.us-admin-meta__user-link {
+    margin-left: 8px;
+}
+
+/* Allocator confirmed note */
+.us-admin-meta__allocator-confirmed {
+    margin-top: 8px;
+    color: #00a32a;
+    font-size: 12px;
+}
+
+/* Empty state */
+.us-admin-meta__empty {
+    color: #666;
+}
+
+/* ── Umpire stats sidebar ─────────────────────────────────── */
+
+.us-admin-meta__stats-table {
+    margin: 0;
+}
+
+.us-admin-meta__stats-table th,
+.us-admin-meta__stats-table td {
+    padding: 4px 0;
+}
+
+/* No-show count highlight */
+.us-admin-meta__stat--danger {
+    color: #d63638;
+}
+
+/* Role badge base */
+.us-admin-meta__role-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.us-admin-meta__role-badge--allocator {
+    background: #e8f0f8;
+    color: #0c447c;
+}
+
+.us-admin-meta__role-badge--umpire {
+    background: #f0f0f0;
+    color: #666;
+    font-weight: normal;
+}
+
+/* Divider between stats and unavailable dates */
+.us-admin-meta__divider {
+    margin: 12px 0;
+}
+
+/* Unavailable dates section */
+.us-admin-meta__unavail-heading {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.us-admin-meta__unavail-list {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.8;
+}
+
+.us-admin-meta__unavail-empty {
+    font-size: 12px;
+    color: #999;
+    margin: 0;
+}
+
+/* ── Pay reports page ─────────────────────────────────────── */
+
+.us-pay-tabs { margin-bottom: 20px; }
+
+.us-pay-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    max-width: 700px;
+}
+
+.us-pay-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.us-pay-card--danger  { border-top: 3px solid #d63638; }
+.us-pay-card--success { border-top: 3px solid #00a32a; }
+.us-pay-card--info    { border-top: 3px solid #0073aa; }
+
+.us-pay-card__value {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.us-pay-card--danger  .us-pay-card__value { color: #d63638; }
+.us-pay-card--success .us-pay-card__value { color: #00a32a; }
+.us-pay-card--info    .us-pay-card__value { color: #0073aa; }
+
+.us-pay-card__label {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.us-pay-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.us-pay-filter-select {
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+.us-pay-block {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.us-pay-block__header {
+    background: #091b33;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.us-pay-block__header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.us-pay-block__header-right {
+    display: flex;
+    gap: 16px;
+}
+
+.us-pay-block__name {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.us-pay-block__games {
+    color: #598cb9;
+    font-size: 13px;
+}
+
+.us-pay-block__outstanding {
+    font-size: 13px;
+    color: #ff8080;
+}
+
+.us-pay-block__paid {
+    font-size: 13px;
+    color: #69db7c;
+}
+
+.us-pay-table           { border: none; }
+.us-pay-table__head     { background: #f9f9f9; }
+.us-pay-table__month    { font-weight: 500; }
+
+.us-pay-status--paid        { color: #00a32a; font-weight: 600; }
+.us-pay-status--outstanding { color: #d63638; font-weight: 600; }
+
+.us-pay-remove-link {
+    color: #d63638;
+    font-size: 12px;
+}
+
+/* ── Pay modal ────────────────────────────────────────────── */
+
+.us-pay-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.us-pay-modal__inner {
+    background: #fff;
+    border-radius: 8px;
+    padding: 28px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+
+.us-pay-modal__title {
+    margin: 0 0 4px;
+    color: #091b33;
+}
+
+.us-pay-modal__label {
+    margin: 0 0 4px;
+    color: #444;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.us-pay-modal__sublabel {
+    margin: 0 0 16px;
+    color: #666;
+    font-size: 13px;
+}
+
+.us-pay-modal__table    { margin: 0 0 16px; }
+.us-pay-modal__table th { padding: 6px 0; font-size: 13px; }
+.us-pay-modal__table td { padding: 6px 0; }
+
+.us-pay-modal__actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ── Inline edit row (admin.js) ───────────────────────────── */
+
+/* Edit row background — replaces style="background:#f0f5fa" */
+.us-edit-game-row {
+    background: #f0f5fa;
+}
+
+/* Edit row inner flex wrapper */
+.us-edit-game-row__inner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+}
+
+/* Field group inside edit row */
+.us-edit-game-row__group {
+    display: flex;
+    flex-direction: column;
+}
+
+.us-edit-game-row__group--grow {
+    flex: 1;
+    min-width: 160px;
+}
+
+/* Sublabel inside edit row — same as us-admin-meta__sublabel */
+.us-edit-game-row__label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #091b33;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+/* Inputs inside edit row */
+.us-edit-game-row__input {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.us-edit-game-row__input--full {
+    width: 100%;
+}
+
+/* DH checkbox group */
+.us-edit-game-row__dh {
+    align-self: center;
+    padding-bottom: 2px;
+}
+
+.us-edit-game-row__dh-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #091b33;
+    font-weight: 500;
+}
+
+.us-edit-game-row__dh-checkbox {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.us-edit-game-row__dh-hint {
+    display: block;
+    font-size: 11px;
+    color: #92400e;
+    margin-top: 3px;
+    margin-left: 21px;
+}
+
+/* Action group: save/cancel/msg */
+.us-edit-game-row__actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.us-edit-game-row__msg {
+    font-size: 12px;
+    color: #666;
+    margin-left: 4px;
+}
+
+/* DH badge in game name cell */
+.us-dh-badge {
+    font-size: 11px;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+}
+
+/* ── Requests page ────────────────────────────────────────── */
+
+.us-requests-summary {
+    color: #666;
+    margin-bottom: 16px;
+}
+
+/* Card */
+.us-req-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background: #fff;
+}
+
+/* Header row */
+.us-req-card__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Date pill */
+.us-req-card__date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #091b33;
+    color: #fff;
+    border-radius: 6px;
+    padding: 8px 14px;
+    min-width: 58px;
+    line-height: 1.3;
+    flex-shrink: 0;
+    text-align: center;
+}
+.us-req-card__date-day  { font-size: 11px; text-transform: uppercase; opacity: .75; }
+.us-req-card__date-num  { font-size: 16px; font-weight: 700; }
+.us-req-card__date-year { font-size: 11px; opacity: .6; }
+
+/* Game info */
+.us-req-card__info  { flex: 1; }
+.us-req-card__title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.us-req-card__meta  {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #555;
+}
+
+.us-req-card__position-badge {
+    background: #598cb9;
+    color: #fff;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Request count */
+.us-req-card__count {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+/* Umpire rows */
+.us-req-card__umpires { padding: 0 16px; }
+
+.us-req-card__umpire-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.us-req-card__umpire-row:last-child {
+    border-bottom: none;
+}
+.us-req-card__umpire-row--conflict {
+    background: #fff8f8;
+    margin: 0 -16px;
+    padding: 12px 16px;
+}
+
+.us-req-card__umpire-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.us-req-card__pay {
+    color: #555;
+    font-size: 13px;
+}
+
+.us-req-card__conflict-badge {
+    background: #fef2f2;
+    color: #d63638;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* Action buttons — outlined, slim */
+.us-req-card__umpire-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.us-req-btn {
+    display: inline-block;
+    padding: 4px 12px !important;
+    font-size: 13px !important;
+    border-radius: 4px !important;
+    border: 1px solid !important;
+    text-decoration: none !important;
+    line-height: 1.6 !important;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+.us-req-btn--confirm {
+    color: #2e7d32 !important;
+    border-color: #2e7d32 !important;
+    background: #fff !important;
+}
+.us-req-btn--confirm:hover {
+    background: #2e7d32 !important;
+    color: #fff !important;
+}
+.us-req-btn--deny {
+    color: #d63638 !important;
+    border-color: #d63638 !important;
+    background: #fff !important;
+}
+.us-req-btn--deny:hover {
+    background: #d63638 !important;
+    color: #fff !important;
+}

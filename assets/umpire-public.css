@@ -1,0 +1,181 @@
+/* ── League schedule ───────────────────────────────────────── */
+.us-schedule-league-select { margin-bottom: 20px; }
+
+.us-schedule-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.us-schedule-date-select {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: var(--us-radius-md);
+    border: 1px solid #ddd;
+    color: var(--us-primary);
+    flex: 1;
+    min-width: 200px;
+}
+
+.us-schedule__filter-label   { font-size: 14px; font-weight: 600; color: #091b33; margin-right: 8px; }
+.us-schedule__filter-select  { font-size: 14px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; }
+.us-schedule__league-title   { font-size: 16px; font-weight: 600; color: #091b33; margin-bottom: 20px; }
+.us-schedule__game-count     { font-size: 12px; color: #666; margin-top: 8px; }
+.us-schedule__tourney-dates  { font-size: 13px; color: #598cb9; margin-bottom: 20px; }
+
+/* ── Slot status inline labels ─────────────────────────────── */
+.us-assignment-tick  { font-size: 11px; margin-left: 4px; }
+.us-slot-pending     { color: #dba617; font-size: 13px; }
+.us-slot-open        { color: #dc2626; font-size: 13px; }
+.us-slot-na          { color: #999; font-size: 12px; }
+
+/* ── Umpire list ───────────────────────────────────────────── */
+.us-umpire-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.us-umpire-card {
+    background: var(--us-surface);
+    border-radius: var(--us-radius-xl);
+    padding: 20px;
+    box-shadow: var(--us-shadow-sm);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.us-umpire-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--us-primary);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: .02em;
+}
+
+.us-umpire-info    { flex: 1; min-width: 0; }
+.us-umpire-name    { font-size: 15px; font-weight: 700; color: var(--us-primary); margin-bottom: 2px; }
+.us-umpire-games   { font-size: 12px; color: var(--us-text-muted); margin-bottom: 8px; }
+
+.us-umpire-contact-details {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--us-border);
+}
+
+.us-umpire-detail {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 4px;
+    align-items: center;
+}
+
+.us-umpire-detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--us-secondary);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    min-width: 44px;
+}
+
+.us-umpire-list__login-notice { margin-bottom: 20px; }
+.us-link                      { color: #598cb9; }
+.us-contact-toggle--sm        { margin-top: 12px; font-size: 12px; }
+.us-contact-form__textarea    { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; }
+.us-contact-form__actions     { display: flex; gap: 8px; margin-top: 8px; }
+
+@media (max-width: 640px) {
+    .us-umpire-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Contact form ──────────────────────────────────────────── */
+.us-contact-form input[type="text"],
+.us-contact-form textarea {
+    width: 100% !important;
+    padding: 10px 14px !important;
+    border: 1px solid #ddd !important;
+    border-radius: var(--us-radius-md) !important;
+    font-size: 14px !important;
+    color: var(--us-text) !important;
+    background: var(--us-surface) !important;
+    box-shadow: none !important;
+    outline: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+.us-contact-form input[type="text"]:focus,
+.us-contact-form textarea:focus {
+    border-color: var(--us-secondary) !important;
+}
+
+.us-contact-form .us-form-group { margin-bottom: 12px; }
+.us-contact-toggle              { background: var(--us-secondary) !important; color: #fff !important; border: none !important; }
+
+.us-contact-form .us-btn-confirm {
+    background: var(--us-primary) !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+    border-radius: var(--us-radius-md) !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    width: auto !important;
+    min-height: var(--us-btn-min-height);
+}
+
+.us-contact-form .us-btn-confirm:hover { background: var(--us-secondary) !important; }
+
+/* ── Hello theme overrides ─────────────────────────────────── */
+.us-page-wrap .us-umpire-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 16px !important;
+    margin-top: 20px !important;
+}
+
+.us-page-wrap .us-umpire-card {
+    background: var(--us-surface) !important;
+    border-radius: var(--us-radius-xl) !important;
+    padding: 20px !important;
+    box-shadow: var(--us-shadow-sm) !important;
+    display: flex !important;
+    gap: 16px !important;
+    align-items: flex-start !important;
+}
+
+.us-page-wrap .us-umpire-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background: var(--us-primary) !important;
+    color: #fff !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 640px) {
+    .us-page-wrap .us-umpire-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

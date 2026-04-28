@@ -1,0 +1,40 @@
+/* ── Availability calendar ─────────────────────────────────── */
+.us-cal-wrap             { max-width: 480px; margin-top: 20px; }
+
+.us-cal-nav              { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.us-cal-month-label      { font-size: 16px; font-weight: 600; color: var(--us-primary); flex: 1; text-align: center; }
+
+.us-cal-grid-wrap        { border: 1px solid var(--us-border); border-radius: var(--us-radius-lg); overflow: hidden; }
+
+.us-cal-days-header      { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; background: var(--us-primary); }
+.us-cal-days-header span { display: block !important; text-align: center; padding: 8px 0; font-size: 12px; font-weight: 600; color: #fff; letter-spacing: .04em; }
+
+.us-cal-grid             { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; }
+
+.us-cal-cell             { display: flex !important; align-items: center; justify-content: center;
+                           height: 44px; font-size: 14px; cursor: pointer;
+                           border-right: 1px solid var(--us-border); border-bottom: 1px solid var(--us-border);
+                           user-select: none; -webkit-user-select: none; transition: opacity 0.1s; }
+.us-cal-cell:nth-child(7n) { border-right: none; }
+
+.us-cal-cell--empty      { background: #fafafa; cursor: default; }
+.us-cal-cell--past       { color: var(--us-text-light); background: #fafafa; cursor: default; }
+.us-cal-cell--avail      { background: #fff; color: var(--us-text); }
+.us-cal-cell--avail:hover { background: #e8f5ee; }
+.us-cal-cell--unavail    { background: #fef2f2; color: var(--us-danger); font-weight: 600; }
+.us-cal-cell--unavail:hover { background: #fde8e8; }
+.us-cal-cell--game       { background: #eff6ff; color: var(--us-secondary); font-weight: 600; cursor: default; }
+
+.us-cal-legend           { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.us-cal-legend-item      { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--us-text-muted); }
+.us-cal-dot              { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.us-cal-dot--avail       { background: #d1fae5; border: 1px solid #6ee7b7; }
+.us-cal-dot--unavail     { background: #fecaca; border: 1px solid #f87171; }
+.us-cal-dot--game        { background: #bfdbfe; border: 1px solid #93c5fd; }
+
+.us-cal-status           { min-height: 20px; margin-top: 8px; font-size: 13px; }
+.us-cal-status--saving   { color: var(--us-text-muted); }
+.us-cal-status--saved    { color: var(--us-accent); }
+.us-cal-status--error    { color: var(--us-danger); }
+
+.us-cal-intro            { margin-bottom: 16px; font-size: 13px; color: var(--us-text-muted); }

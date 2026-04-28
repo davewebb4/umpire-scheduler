@@ -1,0 +1,25 @@
+# FTP/SFTP credentials — never commit
+.vscode/sftp.json
+
+# FTP deployment state
+.ftp-deploy-sync-state.json
+.ftpquota
+
+# Backup files
+*.bak
+*.bak.css
+*.bak.php
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor swap files
+*.swp
+*.swo
+*~
+
+# Node (if ever added)
+node_modules/
+npm-debug.log*

@@ -1,0 +1,78 @@
+<?php
+/**
+ * Plugin Name: Umpire Scheduler
+ * Plugin URI:  https://gvsu.ca
+ * Description: Slo-pitch umpire scheduling, assignment and pay tracking across multiple leagues.
+ * Version:     1.4.3
+ * Author:      Dave Webb
+ * License:     GPL2
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+// ── Constants ─────────────────────────────────────────────────
+define( 'US_PATH',    plugin_dir_path( __FILE__ ) );
+define( 'US_URL',     plugin_dir_url( __FILE__ ) );
+define( 'US_VERSION', '1.4.3');
+
+// ── Core ──────────────────────────────────────────────────────
+require_once US_PATH . 'includes/core/settings.php';
+require_once US_PATH . 'includes/core/roles.php';
+require_once US_PATH . 'includes/core/cpt-register.php';
+require_once US_PATH . 'includes/core/helpers.php';
+require_once US_PATH . 'includes/core/frontend.php';
+
+// ── Meta boxes ────────────────────────────────────────────────
+require_once US_PATH . 'includes/meta/meta-fields.php';
+
+
+// ── Admin ─────────────────────────────────────────────────────
+require_once US_PATH . 'includes/admin/admin-dashboard.php';
+require_once US_PATH . 'includes/admin/admin-menu.php';
+require_once US_PATH . 'includes/admin/admin-requests.php';
+require_once US_PATH . 'includes/admin/admin-pay-reports.php';
+require_once US_PATH . 'includes/admin/assignment-columns.php';
+require_once US_PATH . 'includes/admin/league-games-page.php';
+require_once US_PATH . 'includes/admin/broadcast.php';
+require_once US_PATH . 'includes/admin/csv-import.php';
+require_once US_PATH . 'includes/admin/ics-import.php';
+require_once US_PATH . 'includes/admin/ajax-assign.php';
+
+// ── Umpire (front end) ────────────────────────────────────────
+require_once US_PATH . 'includes/umpire/umpire-dashboard.php';
+require_once US_PATH . 'includes/umpire/umpire-schedule.php';
+require_once US_PATH . 'includes/umpire/umpire-open-games.php';
+require_once US_PATH . 'includes/umpire/umpire-earnings.php';
+require_once US_PATH . 'includes/umpire/umpire-actions.php';
+
+require_once US_PATH . 'includes/umpire/umpire-notifications.php';
+require_once US_PATH . 'includes/umpire/umpire-notices.php';
+require_once US_PATH . 'includes/umpire/availability.php';
+require_once US_PATH . 'includes/umpire/ical-export.php';
+
+// ── Allocator (front end) ─────────────────────────────────────
+require_once US_PATH . 'includes/allocator/allocator-dashboard.php';
+require_once US_PATH . 'includes/allocator/allocator-games.php';
+require_once US_PATH . 'includes/allocator/allocator-tournaments.php';
+require_once US_PATH . 'includes/allocator/allocator-past-games.php';
+require_once US_PATH . 'includes/allocator/allocator-pay-reports.php';
+require_once US_PATH . 'includes/allocator/allocator-umpire-history.php';
+require_once US_PATH . 'includes/allocator/xlsx-export.php';
+
+// ── Public pages ──────────────────────────────────────────────
+require_once US_PATH . 'includes/public/league-schedule.php';
+require_once US_PATH . 'includes/public/tournament-schedule.php';
+require_once US_PATH . 'includes/public/umpire-list.php';
+
+// ── Activation / deactivation ─────────────────────────────────
+register_activation_hook( __FILE__, 'us_activate' );
+function us_activate() {
+    us_register_cpts();
+    us_register_roles();
+    flush_rewrite_rules();
+}
+
+register_deactivation_hook( __FILE__, 'us_deactivate' );
+function us_deactivate() {
+    flush_rewrite_rules();
+}
