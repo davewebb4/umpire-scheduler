@@ -57,7 +57,7 @@ function us_settings_page() {
                     <td>
                         <input type="text" id="us_org_name" name="us_org_name"
                                value="<?php echo esc_attr( $s['org_name'] ); ?>"
-                               class="regular-text" placeholder="e.g. Greater Vancouver Slo-Pitch Association" />
+                               class="regular-text" placeholder="e.g. City Slo-Pitch Association" />
                         <p class="description">Full name used in email footers and page titles.</p>
                     </td>
                 </tr>
@@ -66,7 +66,7 @@ function us_settings_page() {
                     <td>
                         <input type="text" id="us_org_short" name="us_org_short"
                                value="<?php echo esc_attr( $s['org_short'] ); ?>"
-                               class="small-text" placeholder="e.g. GVSU" maxlength="6" />
+                               class="small-text" placeholder="e.g. CSA" maxlength="6" />
                         <p class="description">Displays in the logo badge in the top bar and login screen. Max 6 characters.</p>
                     </td>
                 </tr>
@@ -426,6 +426,15 @@ function us_save_settings() {
         $settings[ $key ] = $sanitizer( $_POST[ 'us_' . $key ] ?? '' );
     }
 
+    // Required fields — don't save blanks over existing values
+    $required = [ 'org_name', 'org_short', 'app_title', 'assignor_email' ];
+    $existing = get_option( 'us_settings', [] );
+    foreach ( $required as $key ) {
+        if ( empty( $settings[ $key ] ) && ! empty( $existing[ $key ] ) ) {
+            $settings[ $key ] = $existing[ $key ];
+        }
+    }
+
     update_option( 'us_settings', $settings );
     update_option( 'us_notify_allocator_on_request', isset( $_POST['us_notify_allocator_on_request'] ) ? 1 : 0 );
 
@@ -439,11 +448,11 @@ function us_get_settings() {
     if ( $cache !== null ) return $cache;
 
     $defaults = [
-        'org_name'                        => 'Greater Vancouver Slo-Pitch Association',
-        'org_short'                       => 'GVSU',
+        'org_name'                        => '',
+        'org_short'                       => '',
         'app_title'                       => 'Umpire Scheduler',
         'assignor_email'                  => get_option( 'admin_email' ),
-        'assignor_name'                   => 'The Assignor',
+        'assignor_name'                   => '',
         'timezone'                        => 'America/Vancouver',
         'slug_dashboard'                  => 'umpire-dashboard',
         'slug_schedule'                   => 'umpire-schedule',
