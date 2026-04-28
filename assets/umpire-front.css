@@ -660,3 +660,56 @@ body.us-page {
     border-top: 1px dashed var(--us-border);
     margin: 0;
 }
+
+/* ── Mobile improvements ───────────────────────────────────── */
+@media (max-width: 640px) {
+
+    /* Flyout — slightly narrower on small phones */
+    .us-flyout {
+        width: 260px !important;
+    }
+
+    /* Input rows — stack on mobile */
+    .us-input-row {
+        flex-direction: column !important;
+    }
+
+    /* Login card — tighter padding */
+    .us-login-card {
+        padding: 28px 20px !important;
+    }
+
+    /* Modal — full width on mobile */
+    .us-modal__inner {
+        width: 95% !important;
+        padding: 20px 16px !important;
+    }
+
+    /* Topbar title — smaller on mobile */
+    .us-topbar-title {
+        font-size: 14px !important;
+    }
+
+    /* Buttons in modal — full width */
+    .us-modal__actions {
+        flex-direction: column !important;
+    }
+    .us-modal__actions .us-btn {
+        width: 100% !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Flyout — near full width on very small phones */
+    .us-flyout {
+        width: 85vw !important;
+    }
+
+    /* Page wrap — tighter on tiny phones */
+    .us-page-wrap {
+        padding: 16px 12px !important;
+    }
+}

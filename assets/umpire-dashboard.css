@@ -674,3 +674,49 @@
     font-size: 12px;
     font-weight: 600;
 }
+
+/* ── Mobile improvements ───────────────────────────────────── */
+@media (max-width: 640px) {
+
+    /* Stat cards — scale down value font */
+    .us-stat-value {
+        font-size: 22px !important;
+    }
+    .us-stat-card {
+        padding: 14px 12px !important;
+    }
+
+    /* Dashboard heading */
+    .us-dashboard h2 {
+        font-size: 18px !important;
+    }
+    .us-dashboard h3 {
+        font-size: 15px !important;
+    }
+
+    /* Profile grid — single column */
+    .us-profile-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Open games card header — stack on small */
+    .us-og-card__header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+    .us-og-card__actions {
+        width: 100% !important;
+    }
+    .us-og-btn {
+        flex: 1 !important;
+        min-height: 44px !important;
+        text-align: center !important;
+    }
+
+    /* Game card body — stack */
+    .us-game-card__body {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+}

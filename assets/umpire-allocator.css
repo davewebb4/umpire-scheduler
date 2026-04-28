@@ -808,3 +808,100 @@
         width: auto !important;
     }
 }
+
+/* ── Mobile improvements ───────────────────────────────────── */
+@media (max-width: 640px) {
+
+    /* Pay cards — stack to 2 columns on small phones */
+    .us-pay-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Pay block header — stack on mobile */
+    .us-pay-block__header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+    }
+    .us-pay-block__header-right {
+        flex-direction: column !important;
+        gap: 4px !important;
+        align-items: flex-start !important;
+    }
+
+    /* Request cards — stack umpire row on mobile */
+    .us-req-card__umpire-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+    .us-req-card__umpire-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+    .us-req-btn {
+        flex: 1 !important;
+        text-align: center !important;
+    }
+
+    /* Request card header — stack date + info */
+    .us-req-card__header {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .us-req-card__count {
+        width: 100% !important;
+    }
+
+    /* Management card — reduce gaps */
+    .us-mgmt-card__header {
+        gap: 8px !important;
+        padding: 10px 12px !important;
+    }
+    .us-mgmt-card__umpires {
+        gap: 8px 12px !important;
+        padding: 10px 12px !important;
+    }
+
+    /* Assign dropdown — full width on mobile */
+    .us-alloc-assign__select,
+    select[data-uid] {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Allocator tabs — smaller padding on mobile */
+    .us-alloc-games__tab,
+    .us-alloc-pay__tab {
+        padding: 7px 10px !important;
+        font-size: 12px !important;
+    }
+
+    /* Game modal grid — single column on mobile */
+    .us-game-modal__grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Month nav — reduce min-width */
+    .us-alloc-games__month-label {
+        min-width: 70px !important;
+        font-size: 13px !important;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Pay cards — single column on very small phones */
+    .us-pay-cards {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Modal actions — stack buttons */
+    .us-modal__actions {
+        flex-direction: column !important;
+    }
+    .us-modal__actions .us-btn {
+        width: 100% !important;
+        text-align: center !important;
+    }
+}
