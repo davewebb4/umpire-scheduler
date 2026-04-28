@@ -26,6 +26,9 @@ require_once US_PATH . 'includes/core/frontend.php';
 require_once US_PATH . 'includes/meta/meta-fields.php';
 
 
+// ── Setup wizard ──────────────────────────────────────────────
+require_once US_PATH . 'includes/admin/setup-wizard.php';
+
 // ── Admin ─────────────────────────────────────────────────────
 require_once US_PATH . 'includes/admin/admin-dashboard.php';
 require_once US_PATH . 'includes/admin/admin-menu.php';
@@ -70,6 +73,10 @@ function us_activate() {
     us_register_cpts();
     us_register_roles();
     flush_rewrite_rules();
+    // Mark wizard complete on existing installs so it never shows
+    if ( get_option( 'us_settings' ) ) {
+        update_option( 'us_wizard_complete', '1' );
+    }
 }
 
 register_deactivation_hook( __FILE__, 'us_deactivate' );
