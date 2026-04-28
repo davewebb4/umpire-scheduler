@@ -22,7 +22,6 @@ function us_login_form() {
                     <?php echo esc_html( us_setting( 'org_short' ) ); ?>
                 <?php endif; ?>
             </div>
-            <h2 class="us-login-title"><?php echo esc_html( us_setting( 'app_title' ) ); ?></h2>
             <p class="us-login-sub">Sign in to access your schedule</p>
 
             <?php if ( $login_error ) : ?>
