@@ -553,6 +553,7 @@ body.us-page {
 .us-login-register {
     display: block;
     text-align: center;
+    align-self: center;
     margin-top: 10px;
     font-size: 13px;
     color: var(--us-secondary);
