@@ -18,10 +18,10 @@ jobs:
       - name: Deploy changed files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ftp.davewebbdesigns.com
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /wp-content/plugins/umpire-scheduler/
+          server: ${{ secrets.PROD_FTP_HOST }}
+          username: ${{ secrets.PROD_FTP_USERNAME }}
+          password: ${{ secrets.PROD_FTP_PASSWORD }}
+          server-dir: public_html/gvsu.ca/wp-content/plugins/umpire-scheduler/
           exclude: |
             **/.git*
             **/.git*/**
