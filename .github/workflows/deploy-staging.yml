@@ -1,4 +1,4 @@
-name: Deploy to Test Site
+name: Deploy to UMPIRE.DEVCAFE.CA
 
 on:
   push:
