@@ -171,6 +171,30 @@ function us_notify_assignor_requested( $assignment_id ) {
     );
 }
 
+// ── Assignor: new umpire self-registered ─────────────────────
+function us_notify_assignor_new_umpire( $name, $email ) {
+    $admin_url = admin_url( 'edit.php?post_type=' . US_PT_UMPIRE );
+    wp_mail(
+        us_get_assignor_email(),
+        'New umpire registered — ' . $name,
+        "{$name} ({$email}) has created an umpire account and is now active in the system.\n\nView their profile:\n{$admin_url}"
+    );
+}
+
+// ── Umpire: welcome email after self-registration ─────────────
+function us_notify_umpire_welcome( $email, $name ) {
+    $dashboard_url = home_url( '/' . us_setting( 'slug_dashboard' ) . '/' );
+    $open_games_url = home_url( '/' . us_setting( 'slug_open_games' ) . '/' );
+
+    $message  = "Hi {$name},\n\n";
+    $message .= "Welcome! Your umpire account has been created and you're ready to go.\n\n";
+    $message .= "Log in to your dashboard:\n{$dashboard_url}\n\n";
+    $message .= "Browse open games:\n{$open_games_url}\n\n";
+    $message .= "Thanks,\n" . us_setting( 'email_footer' );
+
+    wp_mail( $email, 'Welcome to ' . us_setting( 'app_title' ), $message );
+}
+
 // ── Notify all assigned umpires of a game change ──────────────
 function us_notify_game_changed( $game_id, $changes ) {
     $home      = get_post_meta( $game_id, 'us_home_team', true );

@@ -40,6 +40,7 @@ function us_login_form() {
                 </div>
                 <button type="submit" name="us_login_submit" class="us-login-btn">Sign in</button>
                 <a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" class="us-login-forgot">Forgot your password?</a>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>" class="us-login-register">Create an account</a>
                 <p class="us-login-version">v<?php echo US_VERSION; ?></p>
             </form>
         </div>

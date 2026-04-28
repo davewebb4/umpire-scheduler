@@ -550,6 +550,20 @@ body.us-page {
 
 .us-login-forgot:hover { text-decoration: underline; }
 
+.us-login-register {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--us-secondary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.us-login-register:hover { text-decoration: underline; }
+
+.us-login-card--register { max-width: 480px; }
+
 .us-login-version {
     text-align: center;
     font-size: 11px;

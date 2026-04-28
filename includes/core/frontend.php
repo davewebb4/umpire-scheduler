@@ -19,6 +19,7 @@ function us_is_umpire_page() {
         us_setting( 'slug_allocator_tournament_games' ),
         us_setting( 'slug_allocator_umpire_history' ),
         us_setting( 'slug_allocator_broadcast' ),
+        us_setting( 'slug_register' ),
     ] );
     if ( is_front_page() ) return true;
     if ( is_page( $slugs ) ) return true;

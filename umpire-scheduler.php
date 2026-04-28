@@ -47,6 +47,7 @@ require_once US_PATH . 'includes/umpire/umpire-schedule.php';
 require_once US_PATH . 'includes/umpire/umpire-open-games.php';
 require_once US_PATH . 'includes/umpire/umpire-earnings.php';
 require_once US_PATH . 'includes/umpire/umpire-actions.php';
+require_once US_PATH . 'includes/umpire/umpire-register.php';
 
 require_once US_PATH . 'includes/umpire/umpire-notifications.php';
 require_once US_PATH . 'includes/umpire/umpire-notices.php';
