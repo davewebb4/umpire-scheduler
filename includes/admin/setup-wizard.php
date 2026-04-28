@@ -37,10 +37,10 @@ function us_wizard_menu() {
 function us_wizard_page() {
     if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
 
-    $step = absint( $_GET['step'] ?? 1 );
-
     if ( isset( $_POST['us_wizard_nonce'] ) && wp_verify_nonce( $_POST['us_wizard_nonce'], 'us_wizard' ) ) {
-        $step = us_wizard_handle_post( $step );
+        $step = us_wizard_handle_post( absint( $_POST['step'] ?? 1 ) );
+    } else {
+        $step = absint( $_GET['step'] ?? 1 );
     }
 
     us_wizard_render( $step );
