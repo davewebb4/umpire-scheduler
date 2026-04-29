@@ -28,18 +28,18 @@ function us_shortcode_umpire_home() {
                 <?php if ( $tagline ) : ?>
                     <p class="us-home__tagline"><?php echo esc_html( $tagline ); ?></p>
                 <?php endif; ?>
+                <?php if ( ! is_user_logged_in() ) : ?>
                 <div class="us-home__hero-actions">
                     <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' ) ); ?>"
                        class="us-home__hero-btn us-home__hero-btn--primary">
                         View Schedules
                     </a>
-                    <?php if ( ! is_user_logged_in() ) : ?>
                     <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>"
                        class="us-home__hero-btn us-home__hero-btn--outline">
                         Sign In
                     </a>
-                    <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </div>
         </section>
 
