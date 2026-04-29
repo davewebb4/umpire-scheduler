@@ -347,7 +347,7 @@ function us_inject_dashboard_chrome( $content ) {
     ob_start();
     ?>
     <div class="us-topbar">
-        <div class="us-topbar-brand">
+        <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="us-topbar-brand">
             <?php if ( $logo_url ) : ?>
                 <img src="<?php echo esc_url( $logo_url ); ?>"
                      alt="<?php echo esc_attr( us_setting( 'org_short' ) ); ?>"
@@ -356,7 +356,7 @@ function us_inject_dashboard_chrome( $content ) {
                 <span class="us-topbar-logo-placeholder"><?php echo esc_html( us_setting( 'org_short' ) ); ?></span>
             <?php endif; ?>
             <span class="us-topbar-title"><?php echo esc_html( us_setting( 'app_title' ) ); ?></span>
-        </div>
+        </a>
         <div class="us-topbar-right">
             <?php if ( is_user_logged_in() ) : ?>
                 <span class="us-topbar-user"><?php echo esc_html( $name ); ?></span>

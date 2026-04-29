@@ -61,6 +61,7 @@ body.us-page {
     display: flex;
     align-items: center;
     gap: 12px;
+    text-decoration: none;
 }
 
 .us-topbar-logo {
