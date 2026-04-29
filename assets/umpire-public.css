@@ -20,9 +20,10 @@
 .us-home__tagline { font-size: 17px; color: var(--us-text-muted); margin: 0 0 32px; line-height: 1.5; }
 .us-home__hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .us-home__hero-btn { padding: 13px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-block; transition: opacity .15s; }
-.us-home__hero-btn:hover { opacity: .85; }
 .us-home__hero-btn--primary { background: var(--us-primary); color: #fff; }
+.us-home__hero-btn--primary:hover { opacity: .85; color: #fff; }
 .us-home__hero-btn--outline { background: transparent; color: var(--us-primary); border: 2px solid var(--us-primary); }
+.us-home__hero-btn--outline:hover { opacity: .85; color: var(--us-primary); }
 
 .us-home__section { max-width: 1100px; margin: 0 auto; padding: 48px 24px 0; }
 .us-home__section-title { font-size: 20px; font-weight: 700; color: var(--us-primary); margin: 0 0 20px; padding-bottom: 10px; border-bottom: 2px solid var(--us-primary); }
