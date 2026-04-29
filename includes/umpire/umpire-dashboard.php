@@ -7,10 +7,21 @@ function us_login_form() {
 
     ob_start();
     ?>
+    <?php
+    $logo_id  = get_theme_mod( 'custom_logo' );
+    $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+    ?>
     <div class="us-login-wrap">
         <div class="us-login-card">
-            <div class="us-login-logo"><?php echo esc_html( us_setting( 'org_short' ) ); ?></div>
-            <h2 class="us-login-title"><?php echo esc_html( us_setting( 'app_title' ) ); ?></h2>
+            <div class="us-login-logo">
+                <?php if ( $logo_url ) : ?>
+                    <img src="<?php echo esc_url( $logo_url ); ?>"
+                         alt="<?php echo esc_attr( us_setting( 'org_short' ) ); ?>"
+                         class="us-login-logo__img">
+                <?php else : ?>
+                    <?php echo esc_html( us_setting( 'org_short' ) ); ?>
+                <?php endif; ?>
+            </div>
             <p class="us-login-sub">Sign in to access your schedule</p>
 
             <?php if ( $login_error ) : ?>
@@ -29,9 +40,10 @@ function us_login_form() {
                 </div>
                 <button type="submit" name="us_login_submit" class="us-login-btn">Sign in</button>
                 <a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" class="us-login-forgot">Forgot your password?</a>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>" class="us-login-register">Create an account</a>
+                <p class="us-login-version">v<?php echo US_VERSION; ?></p>
             </form>
         </div>
-        <p class="us-login-version">v<?php echo US_VERSION; ?></p>
     </div>
     <?php
     return ob_get_clean();

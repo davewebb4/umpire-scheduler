@@ -57,7 +57,7 @@ function us_settings_page() {
                     <td>
                         <input type="text" id="us_org_name" name="us_org_name"
                                value="<?php echo esc_attr( $s['org_name'] ); ?>"
-                               class="regular-text" placeholder="e.g. Greater Vancouver Slo-Pitch Association" />
+                               class="regular-text" placeholder="e.g. City Slo-Pitch Association" />
                         <p class="description">Full name used in email footers and page titles.</p>
                     </td>
                 </tr>
@@ -66,7 +66,7 @@ function us_settings_page() {
                     <td>
                         <input type="text" id="us_org_short" name="us_org_short"
                                value="<?php echo esc_attr( $s['org_short'] ); ?>"
-                               class="small-text" placeholder="e.g. GVSU" maxlength="6" />
+                               class="small-text" placeholder="e.g. CSA" maxlength="6" />
                         <p class="description">Displays in the logo badge in the top bar and login screen. Max 6 characters.</p>
                     </td>
                 </tr>
@@ -202,6 +202,8 @@ function us_settings_page() {
                     'slug_allocator_past_games'       => [ 'label' => 'Allocator past games',      'shortcode' => '[allocator_past_games]' ],
                     'slug_allocator_tournament_games' => [ 'label' => 'Tournament management',     'shortcode' => '[tournament_management]' ],
                     'slug_allocator_umpire_history'   => [ 'label' => 'Umpire history',            'shortcode' => '[allocator_umpire_history]' ],
+                    'slug_allocator_broadcast'        => [ 'label' => 'Broadcast message',         'shortcode' => '[allocator_broadcast]' ],
+                    'slug_register'                   => [ 'label' => 'Umpire registration',         'shortcode' => '[umpire_register]' ],
                 ];
                 $base = trailingslashit( home_url() );
                 foreach ( $slug_fields as $key => $info ) :
@@ -418,12 +420,23 @@ function us_save_settings() {
         'slug_allocator_past_games'       => 'sanitize_title',
         'slug_allocator_tournament_games' => 'sanitize_title',
         'slug_allocator_umpire_history'   => 'sanitize_title',
+        'slug_allocator_broadcast'        => 'sanitize_title',
+        'slug_register'                   => 'sanitize_title',
         'email_footer'                    => 'sanitize_text_field',
     ];
 
     $settings = [];
     foreach ( $fields as $key => $sanitizer ) {
         $settings[ $key ] = $sanitizer( $_POST[ 'us_' . $key ] ?? '' );
+    }
+
+    // Required fields — don't save blanks over existing values
+    $required = [ 'org_name', 'org_short', 'app_title', 'assignor_email' ];
+    $existing = get_option( 'us_settings', [] );
+    foreach ( $required as $key ) {
+        if ( empty( $settings[ $key ] ) && ! empty( $existing[ $key ] ) ) {
+            $settings[ $key ] = $existing[ $key ];
+        }
     }
 
     update_option( 'us_settings', $settings );
@@ -439,11 +452,11 @@ function us_get_settings() {
     if ( $cache !== null ) return $cache;
 
     $defaults = [
-        'org_name'                        => 'Greater Vancouver Slo-Pitch Association',
-        'org_short'                       => 'GVSU',
+        'org_name'                        => '',
+        'org_short'                       => '',
         'app_title'                       => 'Umpire Scheduler',
         'assignor_email'                  => get_option( 'admin_email' ),
-        'assignor_name'                   => 'The Assignor',
+        'assignor_name'                   => '',
         'timezone'                        => 'America/Vancouver',
         'slug_dashboard'                  => 'umpire-dashboard',
         'slug_schedule'                   => 'umpire-schedule',
@@ -459,6 +472,8 @@ function us_get_settings() {
         'slug_allocator_past_games'       => 'allocator-past-games',
         'slug_allocator_tournament_games' => 'tournament-management',
         'slug_allocator_umpire_history'   => 'allocator-umpire-history',
+        'slug_allocator_broadcast'        => 'allocator-broadcast',
+        'slug_register'                   => 'umpire-register',
         'email_footer'                    => 'Umpire Scheduler',
     ];
 

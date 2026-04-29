@@ -82,6 +82,80 @@ function us_pay_reports_page() {
             'paid'        => $t_paid,
         ];
     }
+
+    // ── Admin fees — league breakdown ─────────────────────────
+    $admin_fee_data        = [];
+    $grand_allocator_total = 0;
+    $grand_admin_total     = 0;
+    $grand_fees_total      = 0;
+
+    foreach ( $regular_leagues as $league ) {
+        $allocator_rate = floatval( get_post_meta( $league->ID, 'us_allocator_rate', true ) );
+        $admin_rate     = floatval( get_post_meta( $league->ID, 'us_admin_rate',     true ) );
+        if ( ! $allocator_rate && ! $admin_rate ) continue;
+
+        $games = get_posts( [ 'post_type' => US_PT_GAME, 'numberposts' => -1, 'post_status' => 'publish', 'meta_query' => [ [ 'key' => 'us_league_id', 'value' => $league->ID, 'compare' => '=' ] ] ] );
+        $months = [];
+        foreach ( $games as $game ) {
+            $game_date = get_post_meta( $game->ID, 'us_game_date', true );
+            if ( ! $game_date ) continue;
+            $slots = get_posts( [ 'post_type' => US_PT_ASSIGNMENT, 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'ids', 'meta_query' => [ [ 'key' => 'us_game_id', 'value' => $game->ID, 'compare' => '=' ], [ 'key' => 'us_status', 'value' => 'confirmed', 'compare' => '=' ] ] ] );
+            $count = count( $slots );
+            if ( ! $count ) continue;
+            $mk = date( 'Y-m', strtotime( $game_date ) );
+            if ( ! isset( $months[$mk] ) ) $months[$mk] = [ 'label' => date( 'F Y', strtotime( $game_date ) ), 'games' => 0, 'allocator' => 0, 'admin' => 0, 'total' => 0 ];
+            $months[$mk]['games']     += $count;
+            $months[$mk]['allocator'] += $allocator_rate * $count;
+            $months[$mk]['admin']     += $admin_rate     * $count;
+            $months[$mk]['total']     += ( $allocator_rate + $admin_rate ) * $count;
+        }
+        if ( empty( $months ) ) continue;
+        ksort( $months );
+        $la = array_sum( array_column( $months, 'allocator' ) );
+        $ld = array_sum( array_column( $months, 'admin' ) );
+        $lt = array_sum( array_column( $months, 'total' ) );
+        $grand_allocator_total += $la;
+        $grand_admin_total     += $ld;
+        $grand_fees_total      += $lt;
+        $admin_fee_data[] = [ 'league' => $league, 'allocator_rate' => $allocator_rate, 'admin_rate' => $admin_rate, 'months' => $months, 'league_allocator' => $la, 'league_admin' => $ld, 'league_total' => $lt ];
+    }
+
+    // ── Admin fees — tournament allocation ───────────────────
+    $tourney_fee_data          = [];
+    $grand_tourney_alloc_total = 0;
+    $grand_tourney_admin_total = 0;
+    $grand_tourney_fees_total  = 0;
+
+    foreach ( $tournament_leagues as $league ) {
+        $allocator_rate = floatval( get_post_meta( $league->ID, 'us_allocator_rate', true ) );
+        $admin_rate     = floatval( get_post_meta( $league->ID, 'us_admin_rate',     true ) );
+        if ( ! $allocator_rate && ! $admin_rate ) continue;
+
+        $games = get_posts( [ 'post_type' => US_PT_GAME, 'numberposts' => -1, 'post_status' => 'publish', 'meta_query' => [ [ 'key' => 'us_league_id', 'value' => $league->ID, 'compare' => '=' ] ] ] );
+        $months = [];
+        foreach ( $games as $game ) {
+            $game_date = get_post_meta( $game->ID, 'us_game_date', true );
+            if ( ! $game_date ) continue;
+            $slots = get_posts( [ 'post_type' => US_PT_ASSIGNMENT, 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'ids', 'meta_query' => [ [ 'key' => 'us_game_id', 'value' => $game->ID, 'compare' => '=' ], [ 'key' => 'us_status', 'value' => 'confirmed', 'compare' => '=' ] ] ] );
+            $count = count( $slots );
+            if ( ! $count ) continue;
+            $mk = date( 'Y-m', strtotime( $game_date ) );
+            if ( ! isset( $months[$mk] ) ) $months[$mk] = [ 'label' => date( 'F Y', strtotime( $game_date ) ), 'games' => 0, 'allocator' => 0, 'admin' => 0, 'total' => 0 ];
+            $months[$mk]['games']     += $count;
+            $months[$mk]['allocator'] += $allocator_rate * $count;
+            $months[$mk]['admin']     += $admin_rate     * $count;
+            $months[$mk]['total']     += ( $allocator_rate + $admin_rate ) * $count;
+        }
+        if ( empty( $months ) ) continue;
+        ksort( $months );
+        $la = array_sum( array_column( $months, 'allocator' ) );
+        $ld = array_sum( array_column( $months, 'admin' ) );
+        $lt = array_sum( array_column( $months, 'total' ) );
+        $grand_tourney_alloc_total += $la;
+        $grand_tourney_admin_total += $ld;
+        $grand_tourney_fees_total  += $lt;
+        $tourney_fee_data[] = [ 'league' => $league, 'allocator_rate' => $allocator_rate, 'admin_rate' => $admin_rate, 'months' => $months, 'league_allocator' => $la, 'league_admin' => $ld, 'league_total' => $lt ];
+    }
     ?>
     <div class="wrap">
         <h1>Pay Reports</h1>
@@ -101,6 +175,8 @@ function us_pay_reports_page() {
             <a href="<?php echo esc_url( add_query_arg( 'pay_tab', 'tournaments', $base_url ) ); ?>"
                class="nav-tab <?php echo $active_tab === 'tournaments' ? 'nav-tab-active' : ''; ?>">Tournament Pay</a>
             <?php endif; ?>
+            <a href="<?php echo esc_url( add_query_arg( 'pay_tab', 'admin_fees', $base_url ) ); ?>"
+               class="nav-tab <?php echo $active_tab === 'admin_fees' ? 'nav-tab-active' : ''; ?>">Admin Fees</a>
         </nav>
 
         <?php if ( $active_tab === 'leagues' ) : ?>
@@ -317,6 +393,140 @@ function us_pay_reports_page() {
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endforeach; ?>
+        <?php endif; ?>
+
+        <?php elseif ( $active_tab === 'admin_fees' ) : ?>
+
+        <div class="us-pay-cards">
+            <div class="us-pay-card us-pay-card--info">
+                <div class="us-pay-card__value">$<?php echo number_format( $grand_allocator_total, 2 ); ?></div>
+                <div class="us-pay-card__label">Total allocator fees</div>
+            </div>
+            <div class="us-pay-card us-pay-card--info">
+                <div class="us-pay-card__value">$<?php echo number_format( $grand_admin_total, 2 ); ?></div>
+                <div class="us-pay-card__label">Total administrative fees</div>
+            </div>
+            <div class="us-pay-card us-pay-card--danger">
+                <div class="us-pay-card__value">$<?php echo number_format( $grand_fees_total, 2 ); ?></div>
+                <div class="us-pay-card__label">Total fees this season</div>
+            </div>
+        </div>
+
+        <?php if ( empty( $admin_fee_data ) ) : ?>
+            <div class="notice notice-info"><p>No admin fee rates set. Add an allocator or administrative fee rate to a league to see data here.</p></div>
+        <?php else : ?>
+        <?php foreach ( $admin_fee_data as $entry ) :
+            $league = $entry['league'];
+        ?>
+        <div class="us-pay-block">
+            <div class="us-pay-block__header">
+                <div class="us-pay-block__header-left">
+                    <span class="us-pay-block__name"><?php echo esc_html( $league->post_title ); ?></span>
+                    <?php if ( $entry['allocator_rate'] ) : ?>
+                        <span class="us-pay-block__games">Allocator: $<?php echo number_format( $entry['allocator_rate'], 2 ); ?>/game</span>
+                    <?php endif; ?>
+                    <?php if ( $entry['admin_rate'] ) : ?>
+                        <span class="us-pay-block__games">Admin: $<?php echo number_format( $entry['admin_rate'], 2 ); ?>/game</span>
+                    <?php endif; ?>
+                </div>
+                <div class="us-pay-block__header-right">
+                    <span class="us-pay-block__paid">Season total: $<?php echo number_format( $entry['league_total'], 2 ); ?></span>
+                </div>
+            </div>
+            <table class="wp-list-table widefat us-pay-table">
+                <thead>
+                    <tr class="us-pay-table__head">
+                        <th>Month</th>
+                        <th>Games (slots)</th>
+                        <?php if ( $entry['allocator_rate'] ) : ?><th>Allocator fees</th><?php endif; ?>
+                        <?php if ( $entry['admin_rate'] ) : ?><th>Admin fees</th><?php endif; ?>
+                        <th>Month total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $entry['months'] as $month ) : ?>
+                    <tr>
+                        <td><?php echo esc_html( $month['label'] ); ?></td>
+                        <td><?php echo $month['games']; ?></td>
+                        <?php if ( $entry['allocator_rate'] ) : ?><td>$<?php echo number_format( $month['allocator'], 2 ); ?></td><?php endif; ?>
+                        <?php if ( $entry['admin_rate'] ) : ?><td>$<?php echo number_format( $month['admin'], 2 ); ?></td><?php endif; ?>
+                        <td><strong>$<?php echo number_format( $month['total'], 2 ); ?></strong></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <tr style="background:#f8fafc;font-weight:600;border-top:2px solid #e0e0e0">
+                        <td>Season total</td><td>—</td>
+                        <?php if ( $entry['allocator_rate'] ) : ?><td>$<?php echo number_format( $entry['league_allocator'], 2 ); ?></td><?php endif; ?>
+                        <?php if ( $entry['admin_rate'] ) : ?><td>$<?php echo number_format( $entry['league_admin'], 2 ); ?></td><?php endif; ?>
+                        <td>$<?php echo number_format( $entry['league_total'], 2 ); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <?php endforeach; ?>
+        <?php endif; ?>
+
+        <?php if ( ! empty( $tourney_fee_data ) ) : ?>
+        <h2 style="margin-top:32px">Tournament Allocation</h2>
+        <div class="us-pay-cards">
+            <?php if ( $grand_tourney_alloc_total ) : ?>
+            <div class="us-pay-card us-pay-card--info">
+                <div class="us-pay-card__value">$<?php echo number_format( $grand_tourney_alloc_total, 2 ); ?></div>
+                <div class="us-pay-card__label">Total allocator fees</div>
+            </div>
+            <?php endif; ?>
+            <?php if ( $grand_tourney_admin_total ) : ?>
+            <div class="us-pay-card us-pay-card--info">
+                <div class="us-pay-card__value">$<?php echo number_format( $grand_tourney_admin_total, 2 ); ?></div>
+                <div class="us-pay-card__label">Total administrative fees</div>
+            </div>
+            <?php endif; ?>
+            <div class="us-pay-card us-pay-card--danger">
+                <div class="us-pay-card__value">$<?php echo number_format( $grand_tourney_fees_total, 2 ); ?></div>
+                <div class="us-pay-card__label">Total tournament fees</div>
+            </div>
+        </div>
+        <?php foreach ( $tourney_fee_data as $entry ) :
+            $league = $entry['league'];
+        ?>
+        <div class="us-pay-block">
+            <div class="us-pay-block__header">
+                <div class="us-pay-block__header-left">
+                    <span class="us-pay-block__name"><?php echo esc_html( $league->post_title ); ?></span>
+                    <span class="us-pay-block__games" style="color:#598cb9;font-weight:700">TOURNEY</span>
+                </div>
+                <div class="us-pay-block__header-right">
+                    <span class="us-pay-block__paid">Season total: $<?php echo number_format( $entry['league_total'], 2 ); ?></span>
+                </div>
+            </div>
+            <table class="wp-list-table widefat us-pay-table">
+                <thead>
+                    <tr class="us-pay-table__head">
+                        <th>Month</th><th>Games (slots)</th>
+                        <?php if ( $entry['allocator_rate'] ) : ?><th>Allocator fees</th><?php endif; ?>
+                        <?php if ( $entry['admin_rate'] ) : ?><th>Admin fees</th><?php endif; ?>
+                        <th>Month total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $entry['months'] as $month ) : ?>
+                    <tr>
+                        <td><?php echo esc_html( $month['label'] ); ?></td>
+                        <td><?php echo $month['games']; ?></td>
+                        <?php if ( $entry['allocator_rate'] ) : ?><td>$<?php echo number_format( $month['allocator'], 2 ); ?></td><?php endif; ?>
+                        <?php if ( $entry['admin_rate'] ) : ?><td>$<?php echo number_format( $month['admin'], 2 ); ?></td><?php endif; ?>
+                        <td><strong>$<?php echo number_format( $month['total'], 2 ); ?></strong></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <tr style="background:#f8fafc;font-weight:600;border-top:2px solid #e0e0e0">
+                        <td>Season total</td><td>—</td>
+                        <?php if ( $entry['allocator_rate'] ) : ?><td>$<?php echo number_format( $entry['league_allocator'], 2 ); ?></td><?php endif; ?>
+                        <?php if ( $entry['admin_rate'] ) : ?><td>$<?php echo number_format( $entry['league_admin'], 2 ); ?></td><?php endif; ?>
+                        <td>$<?php echo number_format( $entry['league_total'], 2 ); ?></td>
+                    </tr>
                 </tbody>
             </table>
         </div>

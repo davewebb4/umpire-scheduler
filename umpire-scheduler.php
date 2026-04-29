@@ -3,7 +3,7 @@
  * Plugin Name: Umpire Scheduler
  * Plugin URI:  https://gvsu.ca
  * Description: Slo-pitch umpire scheduling, assignment and pay tracking across multiple leagues.
- * Version:     1.4.5
+ * Version:     1.5.0
  * Author:      Dave Webb
  * License:     GPL2
  */
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 // ── Constants ─────────────────────────────────────────────────
 define( 'US_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'US_URL',     plugin_dir_url( __FILE__ ) );
-define( 'US_VERSION', '1.4.5' );
+define( 'US_VERSION', '1.5.0' );
 
 // ── Core ──────────────────────────────────────────────────────
 require_once US_PATH . 'includes/core/settings.php';
@@ -25,6 +25,9 @@ require_once US_PATH . 'includes/core/frontend.php';
 // ── Meta boxes ────────────────────────────────────────────────
 require_once US_PATH . 'includes/meta/meta-fields.php';
 
+
+// ── Setup wizard ──────────────────────────────────────────────
+require_once US_PATH . 'includes/admin/setup-wizard.php';
 
 // ── Admin ─────────────────────────────────────────────────────
 require_once US_PATH . 'includes/admin/admin-dashboard.php';
@@ -44,6 +47,7 @@ require_once US_PATH . 'includes/umpire/umpire-schedule.php';
 require_once US_PATH . 'includes/umpire/umpire-open-games.php';
 require_once US_PATH . 'includes/umpire/umpire-earnings.php';
 require_once US_PATH . 'includes/umpire/umpire-actions.php';
+require_once US_PATH . 'includes/umpire/umpire-register.php';
 
 require_once US_PATH . 'includes/umpire/umpire-notifications.php';
 require_once US_PATH . 'includes/umpire/umpire-notices.php';
@@ -55,6 +59,7 @@ require_once US_PATH . 'includes/allocator/allocator-dashboard.php';
 require_once US_PATH . 'includes/allocator/allocator-games.php';
 require_once US_PATH . 'includes/allocator/allocator-tournaments.php';
 require_once US_PATH . 'includes/allocator/allocator-past-games.php';
+require_once US_PATH . 'includes/allocator/allocator-broadcast.php';
 require_once US_PATH . 'includes/allocator/allocator-pay-reports.php';
 require_once US_PATH . 'includes/allocator/allocator-umpire-history.php';
 require_once US_PATH . 'includes/allocator/xlsx-export.php';
@@ -70,6 +75,10 @@ function us_activate() {
     us_register_cpts();
     us_register_roles();
     flush_rewrite_rules();
+    // Mark wizard complete on existing installs so it never shows
+    if ( get_option( 'us_settings' ) ) {
+        update_option( 'us_wizard_complete', '1' );
+    }
 }
 
 register_deactivation_hook( __FILE__, 'us_deactivate' );

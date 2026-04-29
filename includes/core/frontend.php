@@ -18,6 +18,8 @@ function us_is_umpire_page() {
         us_setting( 'slug_allocator_past_games' ),
         us_setting( 'slug_allocator_tournament_games' ),
         us_setting( 'slug_allocator_umpire_history' ),
+        us_setting( 'slug_allocator_broadcast' ),
+        us_setting( 'slug_register' ),
     ] );
     if ( is_front_page() ) return true;
     if ( is_page( $slugs ) ) return true;
@@ -311,7 +313,7 @@ function us_inject_dashboard_chrome( $content ) {
             $member_items[] = [ 'label' => 'Tournament Management', 'url' => home_url( '/' . us_setting( 'slug_allocator_tournament_games' ) . '/' ) ];
             $member_items[] = [ 'label' => 'Pay Reports',           'url' => home_url( '/' . us_setting( 'slug_allocator_pay_reports' )      . '/' ) ];
             $member_items[] = [ 'label' => 'Umpire History',        'url' => home_url( '/' . us_setting( 'slug_allocator_umpire_history' )   . '/' ) ];
-            $member_items[] = [ 'label' => 'Broadcast Message',     'url' => admin_url( 'admin.php?page=us-broadcast' ) ];
+            $member_items[] = [ 'label' => 'Broadcast Message',     'url' => home_url( '/' . us_setting( 'slug_allocator_broadcast' ) . '/' ) ];
             $member_items[] = [ 'label' => 'WP Admin',              'url' => admin_url(), 'divider' => true ];
         } else {
             $dash_url = us_is_allocator()
@@ -328,7 +330,7 @@ function us_inject_dashboard_chrome( $content ) {
                 $member_items[] = [ 'label' => 'Allocator',             'url' => '', 'divider' => true ];
                 $member_items[] = [ 'label' => 'Allocator Dashboard',   'url' => home_url( '/' . us_setting( 'slug_allocator_dashboard' )        . '/' ) ];
                 $member_items[] = [ 'label' => 'Pay Reports',           'url' => home_url( '/' . us_setting( 'slug_allocator_pay_reports' )      . '/' ) ];
-                $member_items[] = [ 'label' => 'Broadcast Message',     'url' => admin_url( 'admin.php?page=us-broadcast' ) ];
+                $member_items[] = [ 'label' => 'Broadcast Message',     'url' => home_url( '/' . us_setting( 'slug_allocator_broadcast' ) . '/' ) ];
                 $member_items[] = [ 'label' => 'Game Management',       'url' => home_url( '/' . us_setting( 'slug_allocator_games' )            . '/' ) ];
                 $member_items[] = [ 'label' => 'Tournament Management', 'url' => home_url( '/' . us_setting( 'slug_allocator_tournament_games' ) . '/' ) ];
                 $member_items[] = [ 'label' => 'Umpire History',        'url' => home_url( '/' . us_setting( 'slug_allocator_umpire_history' )   . '/' ) ];
