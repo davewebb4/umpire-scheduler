@@ -97,6 +97,53 @@ function us_email_headers() {
     ];
 }
 
+// ── Generate ICS attachment for a game ───────────────────────
+function us_create_ics_attachment( $d ) {
+    $game_date = get_post_meta( $d['game_id'], 'us_game_date', true );
+    $game_time = get_post_meta( $d['game_id'], 'us_game_time', true ) ?: '00:00';
+    $tz        = us_setting( 'timezone' ) ?: 'America/Vancouver';
+
+    try {
+        $start = new DateTime( $game_date . ' ' . $game_time, new DateTimeZone( $tz ) );
+        $end   = clone $start;
+        $end->modify( '+2 hours' );
+    } catch ( Exception $e ) {
+        return null;
+    }
+
+    $dtstart = $start->format( 'Ymd\THis' );
+    $dtend   = $end->format( 'Ymd\THis' );
+    $uid     = 'game-' . $d['game_id'] . '-' . $d['umpire_id'] . '@umpire-scheduler';
+    $summary = $d['away'] . ' vs ' . $d['home'] . ' — ' . $d['position'] . ' Umpire';
+    $desc    = 'League: ' . $d['league'] . '\\nPosition: ' . $d['position'];
+    $org     = us_setting( 'org_name' ) ?: us_setting( 'app_title' );
+
+    $ics  = "BEGIN:VCALENDAR\r\n";
+    $ics .= "VERSION:2.0\r\n";
+    $ics .= "PRODID:-//" . $org . "//Umpire Scheduler//EN\r\n";
+    $ics .= "CALSCALE:GREGORIAN\r\n";
+    $ics .= "METHOD:PUBLISH\r\n";
+    $ics .= "BEGIN:VTIMEZONE\r\n";
+    $ics .= "TZID:" . $tz . "\r\n";
+    $ics .= "END:VTIMEZONE\r\n";
+    $ics .= "BEGIN:VEVENT\r\n";
+    $ics .= "UID:" . $uid . "\r\n";
+    $ics .= "DTSTART;TZID=" . $tz . ":" . $dtstart . "\r\n";
+    $ics .= "DTEND;TZID=" . $tz . ":" . $dtend . "\r\n";
+    $ics .= "SUMMARY:" . $summary . "\r\n";
+    $ics .= "LOCATION:" . $d['field'] . "\r\n";
+    $ics .= "DESCRIPTION:" . $desc . "\r\n";
+    $ics .= "STATUS:CONFIRMED\r\n";
+    $ics .= "END:VEVENT\r\n";
+    $ics .= "END:VCALENDAR\r\n";
+
+    $upload = wp_upload_dir();
+    $path   = $upload['basedir'] . '/us-ics-' . $d['game_id'] . '-' . $d['umpire_id'] . '.ics';
+    file_put_contents( $path, $ics );
+
+    return $path;
+}
+
 // ── Umpire: admin assigned you to a game ─────────────────────
 function us_notify_umpire_assigned( $assignment_id ) {
     $d = us_get_notification_data( $assignment_id );
@@ -106,7 +153,9 @@ function us_notify_umpire_assigned( $assignment_id ) {
     $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">You have been assigned to the following game. Please log in to confirm or decline.</p>';
     $body .= us_email_game_table( $d );
 
-    wp_mail( $d['email'], 'Game assignment — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
+    $ics = us_create_ics_attachment( $d );
+    wp_mail( $d['email'], 'Game assignment — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers(), $ics ? [ $ics ] : [] );
+    if ( $ics ) @unlink( $ics );
 }
 
 // ── Umpire: your request was confirmed ───────────────────────
@@ -118,7 +167,9 @@ function us_notify_umpire_confirmed( $assignment_id ) {
     $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">&#127881; Great news — your request for the following game has been <strong style="color:#1a7f3c;">confirmed</strong>.</p>';
     $body .= us_email_game_table( $d );
 
-    wp_mail( $d['email'], 'Game confirmed — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
+    $ics = us_create_ics_attachment( $d );
+    wp_mail( $d['email'], 'Game confirmed — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers(), $ics ? [ $ics ] : [] );
+    if ( $ics ) @unlink( $ics );
 }
 
 // ── Umpire: your request was denied ──────────────────────────
