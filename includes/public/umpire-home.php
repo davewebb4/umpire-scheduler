@@ -89,7 +89,7 @@ function us_shortcode_umpire_home() {
                    class="us-home__league-card us-home__league-card--tourney">
                     <span class="us-home__league-name"><?php echo esc_html( $tourney->post_title ); ?></span>
                     <?php if ( $dates ) : ?>
-                        <span class="us-home__league-meta">&#128197; <?php echo esc_html( $dates ); ?></span>
+                        <span class="us-home__league-meta"><?php echo esc_html( $dates ); ?></span>
                     <?php endif; ?>
                 </a>
                 <?php endforeach; ?>
@@ -104,12 +104,12 @@ function us_shortcode_umpire_home() {
                     <h2 class="us-home__section-title">Umpires</h2>
                 <ul class="us-home__panel-links">
                     <?php if ( ! is_user_logged_in() ) : ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>">&#43; Register as an Umpire</a></li>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>">&#128100; Sign In</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>">Register as an Umpire</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>">Sign In</a></li>
                     <?php else : ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>">&#128100; My Dashboard</a></li>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_schedule' ) . '/' ) ); ?>">&#128197; My Schedule</a></li>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ) ); ?>">&#9989; Open Games</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>">My Dashboard</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_schedule' ) . '/' ) ); ?>">My Schedule</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ) ); ?>">Open Games</a></li>
                     <?php endif; ?>
                 </ul>
             </div>
@@ -117,11 +117,11 @@ function us_shortcode_umpire_home() {
             <div class="us-home__panel">
                     <h2 class="us-home__section-title">Schedules</h2>
                 <ul class="us-home__panel-links">
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' ) ); ?>">&#127944; League Schedule</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' ) ); ?>">League Schedule</a></li>
                     <?php if ( $has_tourney ) : ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_tournament_schedule' ) . '/' ) ); ?>">&#127942; Tournament Schedule</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_tournament_schedule' ) . '/' ) ); ?>">Tournament Schedule</a></li>
                     <?php endif; ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_umpire_list' ) . '/' ) ); ?>">&#128101; Umpire List</a></li>
+                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_umpire_list' ) . '/' ) ); ?>">Umpire List</a></li>
                 </ul>
             </div>
 
