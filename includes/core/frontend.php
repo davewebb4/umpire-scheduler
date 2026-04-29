@@ -428,7 +428,7 @@ function us_inject_dashboard_chrome( $content ) {
             <?php endforeach; ?>
 
             <li class="us-flyout-nav__item us-flyout-nav__item--logout">
-                <a href="<?php echo esc_url( wp_logout_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ) ); ?>"
+                <a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"
                    class="us-flyout-nav__link us-flyout-nav__link--logout">
                     &#x2192; Log out
                 </a>
