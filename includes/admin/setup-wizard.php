@@ -50,9 +50,12 @@ function us_wizard_page() {
 function us_wizard_handle_post( $step ) {
     if ( $step === 1 ) {
         $settings = get_option( 'us_settings', [] );
-        $settings['org_name']  = sanitize_text_field( $_POST['org_name']  ?? '' );
-        $settings['org_short'] = sanitize_text_field( $_POST['org_short'] ?? '' );
-        $settings['app_title'] = sanitize_text_field( $_POST['app_title'] ?? '' );
+        $settings['org_name']       = sanitize_text_field( $_POST['org_name']       ?? '' );
+        $settings['org_short']      = sanitize_text_field( $_POST['org_short']      ?? '' );
+        $settings['app_title']      = sanitize_text_field( $_POST['app_title']      ?? '' );
+        $settings['tagline']        = sanitize_text_field( $_POST['tagline']        ?? '' );
+        $settings['primary_color']  = sanitize_hex_color(  $_POST['primary_color']  ?? '#091b33' );
+        $settings['secondary_color']= sanitize_hex_color(  $_POST['secondary_color']?? '#598cb9' );
         update_option( 'us_settings', $settings );
         return 2;
     }
@@ -69,6 +72,14 @@ function us_wizard_handle_post( $step ) {
 
     if ( $step === 3 ) {
         us_wizard_create_pages();
+
+        // Set umpire-home as the WordPress front page
+        $home_page = get_page_by_path( 'umpire-home' );
+        if ( $home_page ) {
+            update_option( 'show_on_front', 'page' );
+            update_option( 'page_on_front', $home_page->ID );
+        }
+
         update_option( 'us_wizard_complete', '1' );
         return 4;
     }
@@ -95,6 +106,7 @@ function us_wizard_create_pages() {
         'allocator-umpire-history' => [ 'title' => 'Umpire History',        'shortcode' => '[allocator_umpire_history]','setting' => 'slug_allocator_umpire_history' ],
         'allocator-broadcast'      => [ 'title' => 'Broadcast Message',     'shortcode' => '[allocator_broadcast]',     'setting' => 'slug_allocator_broadcast' ],
         'umpire-register'          => [ 'title' => 'Create Account',         'shortcode' => '[umpire_register]',         'setting' => 'slug_register' ],
+        'umpire-home'              => [ 'title' => 'Home',                    'shortcode' => '[umpire_home]',             'setting' => 'slug_home' ],
     ];
 
     $settings = get_option( 'us_settings', [] );
@@ -205,6 +217,21 @@ function us_wizard_render( $step ) {
                     <input type="text" name="app_title" value="<?php echo esc_attr( $settings['app_title'] ?? 'Umpire Scheduler' ); ?>" placeholder="e.g. Umpire Scheduler" required>
                     <p class="desc">Displayed in the top navigation bar.</p>
                 </div>
+                <div class="wiz-field">
+                    <label>Tagline <span style="font-weight:400;color:#aaa">(optional)</span></label>
+                    <input type="text" name="tagline" value="<?php echo esc_attr( $settings['tagline'] ?? '' ); ?>" placeholder="e.g. Professional umpire services for your league">
+                    <p class="desc">Shown on the home page under the organisation name.</p>
+                </div>
+                <div style="display:flex;gap:16px;">
+                    <div class="wiz-field" style="flex:1">
+                        <label>Primary colour</label>
+                        <input type="color" name="primary_color" value="<?php echo esc_attr( $settings['primary_color'] ?? '#091b33' ); ?>" style="width:100%;height:42px;border-radius:6px;border:1px solid #dde3ea;cursor:pointer;">
+                    </div>
+                    <div class="wiz-field" style="flex:1">
+                        <label>Secondary colour</label>
+                        <input type="color" name="secondary_color" value="<?php echo esc_attr( $settings['secondary_color'] ?? '#598cb9' ); ?>" style="width:100%;height:42px;border-radius:6px;border:1px solid #dde3ea;cursor:pointer;">
+                    </div>
+                </div>
                 <button type="submit" class="wiz-btn">Continue &rarr;</button>
             </form>
 
@@ -274,6 +301,7 @@ function us_wizard_render( $step ) {
                     'Umpire History'         => '[allocator_umpire_history]',
                     'Broadcast Message'      => '[allocator_broadcast]',
                     'Create Account'         => '[umpire_register]',
+                    'Home'                   => '[umpire_home]',
                 ];
                 foreach ( $pages as $title => $shortcode ) :
                 ?>

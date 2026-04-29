@@ -61,6 +61,7 @@ body.us-page {
     display: flex;
     align-items: center;
     gap: 12px;
+    text-decoration: none;
 }
 
 .us-topbar-logo {
@@ -88,7 +89,9 @@ body.us-page {
     color: var(--us-secondary);
     font-size: 13px;
     display: none;
+    text-decoration: none;
 }
+.us-topbar-user:hover { text-decoration: underline; }
 
 @media (min-width: 640px) {
     .us-topbar-user { display: block; }
