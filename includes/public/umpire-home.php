@@ -30,13 +30,13 @@ function us_shortcode_umpire_home() {
                 <?php endif; ?>
                 <?php if ( ! is_user_logged_in() ) : ?>
                 <div class="us-home__hero-actions">
-                    <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' ) ); ?>"
-                       class="us-home__hero-btn us-home__hero-btn--primary">
-                        View Schedules
-                    </a>
                     <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>"
-                       class="us-home__hero-btn us-home__hero-btn--outline">
+                       class="us-home__hero-btn us-home__hero-btn--primary">
                         Sign In
+                    </a>
+                    <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>"
+                       class="us-home__hero-btn us-home__hero-btn--outline">
+                        Register
                     </a>
                 </div>
                 <?php endif; ?>
@@ -97,24 +97,11 @@ function us_shortcode_umpire_home() {
         </section>
         <?php endif; ?>
 
-        <!-- ── Quick access cards ────────────────────────────── -->
+        <!-- ── Quick access cards — logged in only ──────────── -->
+        <?php if ( is_user_logged_in() ) : ?>
         <section class="us-home__section">
             <h2 class="us-home__section-title">Quick Access</h2>
             <div class="us-home__quick-cards">
-                <?php if ( ! is_user_logged_in() ) : ?>
-                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>" class="us-home__quick-card">
-                    <span class="us-home__quick-title">Register as an Umpire</span>
-                    <span class="us-home__quick-sub">Create your free account</span>
-                </a>
-                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>" class="us-home__quick-card">
-                    <span class="us-home__quick-title">Sign In</span>
-                    <span class="us-home__quick-sub">Access your dashboard</span>
-                </a>
-                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ) ); ?>" class="us-home__quick-card">
-                    <span class="us-home__quick-title">Open Games</span>
-                    <span class="us-home__quick-sub">Browse available slots</span>
-                </a>
-                <?php else : ?>
                 <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>" class="us-home__quick-card">
                     <span class="us-home__quick-title">My Dashboard</span>
                     <span class="us-home__quick-sub">Your overview</span>
@@ -127,13 +114,13 @@ function us_shortcode_umpire_home() {
                     <span class="us-home__quick-title">Open Games</span>
                     <span class="us-home__quick-sub">Request available slots</span>
                 </a>
-                <?php endif; ?>
                 <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_umpire_list' ) . '/' ) ); ?>" class="us-home__quick-card">
                     <span class="us-home__quick-title">Umpire List</span>
                     <span class="us-home__quick-sub">View all active umpires</span>
                 </a>
             </div>
         </section>
+        <?php endif; // is_user_logged_in ?>
 
     </div>
     <?php
