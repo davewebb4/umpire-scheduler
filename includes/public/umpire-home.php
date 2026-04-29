@@ -101,8 +101,7 @@ function us_shortcode_umpire_home() {
         <section class="us-home__panels">
 
             <div class="us-home__panel">
-                <div class="us-home__panel-icon">&#9918;</div>
-                <h3 class="us-home__panel-title">Umpires</h3>
+                    <h2 class="us-home__section-title">Umpires</h2>
                 <ul class="us-home__panel-links">
                     <?php if ( ! is_user_logged_in() ) : ?>
                     <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>">&#43; Register as an Umpire</a></li>
@@ -116,8 +115,7 @@ function us_shortcode_umpire_home() {
             </div>
 
             <div class="us-home__panel">
-                <div class="us-home__panel-icon">&#128203;</div>
-                <h3 class="us-home__panel-title">Schedules</h3>
+                    <h2 class="us-home__section-title">Schedules</h2>
                 <ul class="us-home__panel-links">
                     <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' ) ); ?>">&#127944; League Schedule</a></li>
                     <?php if ( $has_tourney ) : ?>
