@@ -105,7 +105,6 @@ function us_notify_umpire_assigned( $assignment_id ) {
     $body  = us_email_greeting( $d['umpire'] );
     $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">You have been assigned to the following game. Please log in to confirm or decline.</p>';
     $body .= us_email_game_table( $d );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ), 'Confirm or Decline' );
 
     wp_mail( $d['email'], 'Game assignment — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -118,7 +117,6 @@ function us_notify_umpire_confirmed( $assignment_id ) {
     $body  = us_email_greeting( $d['umpire'] );
     $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">&#127881; Great news — your request for the following game has been <strong style="color:#1a7f3c;">confirmed</strong>.</p>';
     $body .= us_email_game_table( $d );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_schedule' ) . '/' ), 'View My Schedule' );
 
     wp_mail( $d['email'], 'Game confirmed — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -137,7 +135,6 @@ function us_notify_umpire_denied( $assignment_id ) {
         'Time'     => $d['time_fmt'],
         'Position' => $d['position'],
     ] );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ), 'Browse Open Games' );
 
     wp_mail( $d['email'], 'Game request update — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -167,7 +164,6 @@ function us_notify_umpire_postponed_paid( $assignment_id ) {
     $body  = us_email_greeting( $d['umpire'] );
     $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">The following game has been <strong>postponed</strong>. You arrived on site and will still be paid <strong style="color:#1a7f3c;">$' . number_format( floatval( $pay ), 2 ) . '</strong>.</p>';
     $body .= us_email_game_table( $d );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_earnings' ) . '/' ), 'View My Earnings' );
 
     wp_mail( $d['email'], 'Game postponed — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -180,7 +176,6 @@ function us_notify_umpire_postponed_unpaid( $assignment_id ) {
     $body  = us_email_greeting( $d['umpire'] );
     $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">The following game has been <strong>postponed</strong>. This game will not be paid.</p>';
     $body .= us_email_game_table( $d );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ), 'Browse Open Games' );
 
     wp_mail( $d['email'], 'Game postponed — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -195,7 +190,6 @@ function us_notify_umpire_welcome( $email, $name ) {
            . '<li>Set your availability</li>'
            . '<li>Track your earnings</li>'
            . '</ul>';
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ), 'Go to My Dashboard' );
 
     wp_mail( $email, 'Welcome to ' . us_setting( 'app_title' ), us_email_wrap( $body ), us_email_headers() );
 }
@@ -226,7 +220,6 @@ function us_notify_assignor_declined( $assignment_id ) {
         'Date'     => $d['date_fmt'],
         'Position' => $d['position'],
     ] );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_allocator_dashboard' ) . '/' ), 'Go to Allocator Dashboard' );
 
     wp_mail( us_get_assignor_email(), $d['umpire'] . ' declined — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -243,7 +236,6 @@ function us_notify_assignor_requested( $assignment_id ) {
         'Date'     => $d['date_fmt'],
         'Position' => $d['position'],
     ] );
-    $body .= us_email_btn( home_url( '/' . us_setting( 'slug_allocator_dashboard' ) . '/' ), 'Review Requests' );
 
     wp_mail( us_get_assignor_email(), $d['umpire'] . ' requested a game — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
 }
@@ -252,7 +244,6 @@ function us_notify_assignor_requested( $assignment_id ) {
 function us_notify_assignor_new_umpire( $name, $email ) {
     $body  = '<p style="font-size:15px;color:#091b33;font-weight:600;margin:0;">New umpire registered</p>';
     $body .= '<p style="font-size:14px;color:#444;margin:10px 0 0;"><strong>' . esc_html( $name ) . '</strong> (' . esc_html( $email ) . ') has created an account and is now active in the system.</p>';
-    $body .= us_email_btn( admin_url( 'edit.php?post_type=' . US_PT_UMPIRE ), 'View Umpire Profiles' );
 
     wp_mail( us_get_assignor_email(), 'New umpire registered — ' . $name, us_email_wrap( $body ), us_email_headers() );
 }
@@ -323,8 +314,7 @@ function us_notify_game_changed( $game_id, $changes ) {
             $body .= '</table>';
         }
 
-        $body .= us_email_btn( home_url( '/' . us_setting( 'slug_schedule' ) . '/' ), 'View My Schedule' );
-
+    
         wp_mail( $email, 'Game update — ' . $away . ' at ' . $home . ' — ' . $date_fmt, us_email_wrap( $body ), us_email_headers() );
         $notified++;
     }
