@@ -97,34 +97,41 @@ function us_shortcode_umpire_home() {
         </section>
         <?php endif; ?>
 
-        <!-- ── Panels ────────────────────────────────────────── -->
-        <section class="us-home__panels">
-
-            <div class="us-home__panel">
-                    <h2 class="us-home__section-title">Umpires</h2>
-                <ul class="us-home__panel-links">
-                    <?php if ( ! is_user_logged_in() ) : ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>">Register as an Umpire</a></li>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>">Sign In</a></li>
-                    <?php else : ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>">My Dashboard</a></li>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_schedule' ) . '/' ) ); ?>">My Schedule</a></li>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ) ); ?>">Open Games</a></li>
-                    <?php endif; ?>
-                </ul>
+        <!-- ── Quick access cards ────────────────────────────── -->
+        <section class="us-home__section">
+            <div class="us-home__quick-cards">
+                <?php if ( ! is_user_logged_in() ) : ?>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">Register as an Umpire</span>
+                    <span class="us-home__quick-sub">Create your free account</span>
+                </a>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">Sign In</span>
+                    <span class="us-home__quick-sub">Access your dashboard</span>
+                </a>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">Open Games</span>
+                    <span class="us-home__quick-sub">Browse available slots</span>
+                </a>
+                <?php else : ?>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">My Dashboard</span>
+                    <span class="us-home__quick-sub">Your overview</span>
+                </a>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_schedule' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">My Schedule</span>
+                    <span class="us-home__quick-sub">Upcoming assignments</span>
+                </a>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_open_games' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">Open Games</span>
+                    <span class="us-home__quick-sub">Request available slots</span>
+                </a>
+                <?php endif; ?>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_umpire_list' ) . '/' ) ); ?>" class="us-home__quick-card">
+                    <span class="us-home__quick-title">Umpire List</span>
+                    <span class="us-home__quick-sub">View all active umpires</span>
+                </a>
             </div>
-
-            <div class="us-home__panel">
-                    <h2 class="us-home__section-title">Schedules</h2>
-                <ul class="us-home__panel-links">
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' ) ); ?>">League Schedule</a></li>
-                    <?php if ( $has_tourney ) : ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_tournament_schedule' ) . '/' ) ); ?>">Tournament Schedule</a></li>
-                    <?php endif; ?>
-                    <li><a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_umpire_list' ) . '/' ) ); ?>">Umpire List</a></li>
-                </ul>
-            </div>
-
         </section>
 
     </div>
