@@ -46,7 +46,7 @@ function us_shortcode_umpire_home() {
         <!-- ── Active Leagues ────────────────────────────────── -->
         <?php if ( ! empty( $leagues ) ) : ?>
         <section class="us-home__section">
-            <h2 class="us-home__section-title">Active Leagues</h2>
+            <h2 class="us-home__section-title">League Schedules</h2>
             <div class="us-home__leagues">
                 <?php foreach ( $leagues as $league ) :
                     $pay_rate = get_post_meta( $league->ID, 'us_pay_rate', true );
@@ -99,6 +99,7 @@ function us_shortcode_umpire_home() {
 
         <!-- ── Quick access cards ────────────────────────────── -->
         <section class="us-home__section">
+            <h2 class="us-home__section-title">Quick Access</h2>
             <div class="us-home__quick-cards">
                 <?php if ( ! is_user_logged_in() ) : ?>
                 <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_register' ) . '/' ) ); ?>" class="us-home__quick-card">
