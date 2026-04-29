@@ -2,18 +2,18 @@
 .us-home { width: 100%; }
 
 .us-home__hero {
-    background: var(--us-bg);
+    background: #fff;
     padding: 48px 24px;
     text-align: center;
 }
 .us-home__hero-inner {
-    max-width: 640px;
+    max-width: 900px;
     margin: 0 auto;
     background: #fff;
     border: 2px solid var(--us-primary);
     border-radius: 14px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    padding: 48px 40px;
+    padding: 48px 48px;
 }
 .us-home__logo { max-width: 160px; max-height: 80px; width: auto; height: auto; margin: 0 auto 24px; display: block; object-fit: contain; }
 .us-home__title { font-size: 36px; font-weight: 800; color: var(--us-primary); margin: 0 0 12px; letter-spacing: -.01em; }

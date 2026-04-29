@@ -72,6 +72,14 @@ function us_wizard_handle_post( $step ) {
 
     if ( $step === 3 ) {
         us_wizard_create_pages();
+
+        // Set umpire-home as the WordPress front page
+        $home_page = get_page_by_path( 'umpire-home' );
+        if ( $home_page ) {
+            update_option( 'show_on_front', 'page' );
+            update_option( 'page_on_front', $home_page->ID );
+        }
+
         update_option( 'us_wizard_complete', '1' );
         return 4;
     }
