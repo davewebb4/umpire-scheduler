@@ -20,6 +20,7 @@ function us_is_umpire_page() {
         us_setting( 'slug_allocator_umpire_history' ),
         us_setting( 'slug_allocator_broadcast' ),
         us_setting( 'slug_register' ),
+        us_setting( 'slug_home' ),
     ] );
     if ( is_front_page() ) return true;
     if ( is_page( $slugs ) ) return true;
@@ -222,6 +223,11 @@ function us_enqueue_frontend() {
             'nonce'    => wp_create_nonce( 'us_export_pay' ),
         ] );
     }
+
+    // Inject custom brand colours as CSS variable overrides
+    $primary   = us_setting( 'primary_color' )   ?: '#091b33';
+    $secondary = us_setting( 'secondary_color' ) ?: '#598cb9';
+    wp_add_inline_style( 'us-frontend', ':root { --us-primary: ' . sanitize_hex_color( $primary ) . '; --us-secondary: ' . sanitize_hex_color( $secondary ) . '; }' );
 
     wp_localize_script( 'us-frontend-js', 'usFront', [
         'ajax_url' => admin_url( 'admin-ajax.php' ),

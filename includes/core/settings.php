@@ -81,6 +81,35 @@ function us_settings_page() {
                 </tr>
             </table>
 
+            <h2 class="title">Branding</h2>
+            <table class="form-table">
+                <tr>
+                    <th><label for="us_tagline">Tagline</label></th>
+                    <td>
+                        <input type="text" id="us_tagline" name="us_tagline"
+                               value="<?php echo esc_attr( $s['tagline'] ); ?>"
+                               class="regular-text" placeholder="e.g. Professional umpire services for your league" />
+                        <p class="description">Displayed on the home page under the organisation name.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="us_primary_color">Primary colour</label></th>
+                    <td>
+                        <input type="color" id="us_primary_color" name="us_primary_color"
+                               value="<?php echo esc_attr( $s['primary_color'] ); ?>" />
+                        <p class="description">Main colour used for headers, buttons, and navigation.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="us_secondary_color">Secondary colour</label></th>
+                    <td>
+                        <input type="color" id="us_secondary_color" name="us_secondary_color"
+                               value="<?php echo esc_attr( $s['secondary_color'] ); ?>" />
+                        <p class="description">Accent colour used for links, badges, and highlights.</p>
+                    </td>
+                </tr>
+            </table>
+
             <h2 class="title">Assignor contact</h2>
             <table class="form-table">
                 <tr>
@@ -422,6 +451,10 @@ function us_save_settings() {
         'slug_allocator_umpire_history'   => 'sanitize_title',
         'slug_allocator_broadcast'        => 'sanitize_title',
         'slug_register'                   => 'sanitize_title',
+        'slug_home'                       => 'sanitize_title',
+        'tagline'                         => 'sanitize_text_field',
+        'primary_color'                   => 'sanitize_hex_color',
+        'secondary_color'                 => 'sanitize_hex_color',
         'email_footer'                    => 'sanitize_text_field',
     ];
 
@@ -474,6 +507,10 @@ function us_get_settings() {
         'slug_allocator_umpire_history'   => 'allocator-umpire-history',
         'slug_allocator_broadcast'        => 'allocator-broadcast',
         'slug_register'                   => 'umpire-register',
+        'slug_home'                       => 'umpire-home',
+        'tagline'                         => '',
+        'primary_color'                   => '#091b33',
+        'secondary_color'                 => '#598cb9',
         'email_footer'                    => 'Umpire Scheduler',
     ];
 

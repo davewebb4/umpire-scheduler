@@ -30,12 +30,15 @@ function us_email_wrap( $body ) {
     $org  = us_setting( 'org_name' ) ?: us_setting( 'app_title' );
     $foot = us_setting( 'email_footer' ) ?: $org;
 
+    $primary   = us_setting( 'primary_color' )   ?: '#091b33';
+    $secondary = us_setting( 'secondary_color' ) ?: '#598cb9';
+
     return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
         . '<body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;">'
         . '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:32px 16px;">'
         . '<tr><td align="center">'
         . '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">'
-        . '<tr><td style="background:#091b33;padding:22px 32px;text-align:center;">'
+        . '<tr><td style="background:' . $primary . ';padding:22px 32px;text-align:center;">'
         . '<p style="color:#ffffff;font-size:18px;font-weight:700;margin:0;letter-spacing:.02em;">' . esc_html( $org ) . '</p>'
         . '</td></tr>'
         . '<tr><td style="padding:32px 32px 24px;">' . $body . '</td></tr>'

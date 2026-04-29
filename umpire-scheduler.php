@@ -65,6 +65,7 @@ require_once US_PATH . 'includes/allocator/allocator-umpire-history.php';
 require_once US_PATH . 'includes/allocator/xlsx-export.php';
 
 // ── Public pages ──────────────────────────────────────────────
+require_once US_PATH . 'includes/public/umpire-home.php';
 require_once US_PATH . 'includes/public/league-schedule.php';
 require_once US_PATH . 'includes/public/tournament-schedule.php';
 require_once US_PATH . 'includes/public/umpire-list.php';
