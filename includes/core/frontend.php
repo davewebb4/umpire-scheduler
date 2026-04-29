@@ -359,7 +359,8 @@ function us_inject_dashboard_chrome( $content ) {
         </a>
         <div class="us-topbar-right">
             <?php if ( is_user_logged_in() ) : ?>
-                <span class="us-topbar-user"><?php echo esc_html( $name ); ?></span>
+                <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ); ?>"
+                   class="us-topbar-user"><?php echo esc_html( $name ); ?></a>
             <?php endif; ?>
             <button class="us-menu-btn" id="us-menu-btn" aria-label="Open menu">
                 <span></span><span></span><span></span>
@@ -371,45 +372,19 @@ function us_inject_dashboard_chrome( $content ) {
 
     <nav class="us-flyout" id="us-flyout">
         <div class="us-flyout-header">
-            <span><?php echo is_user_logged_in() ? esc_html( $name ) : 'Menu'; ?></span>
+            <span>Menu</span>
             <button class="us-flyout-close" id="us-flyout-close" aria-label="Close menu">&times;</button>
         </div>
 
         <ul class="us-flyout-nav">
 
-            <?php foreach ( $public_items as $item ) :
-                $has_children = ! empty( $item['children'] );
-            ?>
-            <?php if ( $has_children ) : ?>
-                <li class="us-flyout-nav__item us-flyout-nav__item--public us-flyout-nav__item--parent">
-                    <span class="us-flyout-nav__link us-flyout-nav__link--public us-flyout-nav__link--parent">
-                        <?php echo esc_html( $item['label'] ); ?>
-                    </span>
-                    <ul class="us-flyout-nav__children">
-                        <?php foreach ( $item['children'] as $child ) : ?>
-                        <li class="us-flyout-nav__item us-flyout-nav__item--child">
-                            <a href="<?php echo esc_url( $child['url'] ); ?>"
-                               class="us-flyout-nav__link us-flyout-nav__link--child">
-                                <?php echo esc_html( $child['label'] ); ?>
-                            </a>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </li>
-            <?php else : ?>
-                <li class="us-flyout-nav__item us-flyout-nav__item--public">
-                    <a href="<?php echo esc_url( $item['url'] ); ?>" class="us-flyout-nav__link us-flyout-nav__link--public">
-                        <?php echo esc_html( $item['label'] ); ?>
-                    </a>
-                </li>
-            <?php endif; ?>
-            <?php endforeach; ?>
+            <li class="us-flyout-nav__item us-flyout-nav__item--public">
+                <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="us-flyout-nav__link us-flyout-nav__link--public">
+                    Home
+                </a>
+            </li>
 
             <?php if ( is_user_logged_in() && ! empty( $member_items ) ) : ?>
-
-            <li class="us-flyout-nav__divider us-flyout-nav__divider--user">
-                <?php echo esc_html( $name ); ?>
-            </li>
 
             <?php foreach ( $member_items as $item ) :
                 $is_divider = ! empty( $item['divider'] );
