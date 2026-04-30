@@ -21,7 +21,7 @@ function us_ajax_request_game() {
         wp_send_json_error( 'No umpire profile found.' );
     }
 
-    // Already requested / confirmed?
+    // Already requested / confirmed for this slot?
     $existing = get_posts( [
         'post_type'   => US_PT_ASSIGNMENT,
         'numberposts' => 1,
@@ -36,6 +36,32 @@ function us_ajax_request_game() {
     ] );
     if ( $existing ) {
         wp_send_json_error( 'You have already requested this slot.' );
+    }
+
+    // Already confirmed for a different game on the same day?
+    $game_date      = get_post_meta( $game_id, 'us_game_date', true );
+    $same_day_games = get_posts( [
+        'post_type'   => US_PT_GAME,
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'fields'      => 'ids',
+        'meta_query'  => [ [ 'key' => 'us_game_date', 'value' => $game_date, 'compare' => '=' ] ],
+    ] );
+    if ( ! empty( $same_day_games ) ) {
+        $day_conflict = get_posts( [
+            'post_type'   => US_PT_ASSIGNMENT,
+            'numberposts' => 1,
+            'post_status' => 'publish',
+            'fields'      => 'ids',
+            'meta_query'  => [
+                [ 'key' => 'us_umpire_id', 'value' => $umpire->ID,     'compare' => '='  ],
+                [ 'key' => 'us_game_id',   'value' => $same_day_games, 'compare' => 'IN' ],
+                [ 'key' => 'us_status',    'value' => 'confirmed',      'compare' => '='  ],
+            ],
+        ] );
+        if ( $day_conflict ) {
+            wp_send_json_error( 'You already have a confirmed game on this date.' );
+        }
     }
 
     $pay_rate      = us_get_game_pay_rate( $game_id );
@@ -132,6 +158,23 @@ function us_shortcode_open_games() {
         $g = get_post_meta( $r->ID, 'us_game_id',  true );
         $p = get_post_meta( $r->ID, 'us_position', true );
         $my_pending[ $g . '_' . $p ] = $r->ID;
+    }
+
+    // Dates where the umpire already has a confirmed game
+    $confirmed_assignments = get_posts( [
+        'post_type'   => US_PT_ASSIGNMENT,
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'meta_query'  => [
+            [ 'key' => 'us_umpire_id', 'value' => $umpire_id, 'compare' => '=' ],
+            [ 'key' => 'us_status',    'value' => 'confirmed', 'compare' => '=' ],
+        ],
+    ] );
+    $my_confirmed_dates = [];
+    foreach ( $confirmed_assignments as $ca ) {
+        $g_id   = get_post_meta( $ca->ID, 'us_game_id', true );
+        $g_date = get_post_meta( $g_id, 'us_game_date', true );
+        if ( $g_date ) $my_confirmed_dates[ $g_date ] = true;
     }
 
     // ── Build open games list ─────────────────────────────────
@@ -355,6 +398,8 @@ function us_shortcode_open_games() {
                                         Cancel
                                     </button>
                                     <?php endif; ?>
+                                <?php elseif ( isset( $my_confirmed_dates[ $dh_item['date'] ] ) ) : ?>
+                                    <span class="us-og-btn us-og-btn--booked">Already booked this day</span>
                                 <?php else : ?>
                                     <button class="us-og-btn us-og-btn--request us-request-game"
                                             data-game="<?php echo $game->ID; ?>"
@@ -424,6 +469,8 @@ function us_shortcode_open_games() {
                                         Cancel
                                     </button>
                                     <?php endif; ?>
+                                <?php elseif ( isset( $my_confirmed_dates[ $date ] ) ) : ?>
+                                    <span class="us-og-btn us-og-btn--booked">Already booked this day</span>
                                 <?php else : ?>
                                     <button class="us-og-btn us-og-btn--request us-request-game"
                                             data-game="<?php echo $game->ID; ?>"
