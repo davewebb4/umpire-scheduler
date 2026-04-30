@@ -365,7 +365,7 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
                         <span class="us-mgmt-card__meta-time">&#9679; <?php echo esc_html( date( 'g:i a', strtotime( $time ) ) ); ?></span>
                     <?php endif; ?>
                     <?php if ( $is_dh_meta ) : ?>
-                        <span class="us-alloc-games__badge us-alloc-games__badge--dh">DH rate</span>
+                        <span class="us-alloc-games__badge us-alloc-games__badge--dh">Optional rate</span>
                     <?php endif; ?>
                     <span class="us-mgmt-card__status <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
                 </div>
@@ -769,7 +769,7 @@ function us_mgmt_game_modals( $all_leagues ) {
                 </div>
                 <div class="us-game-modal__field">
                     <label class="us-admin-meta__checkbox-label">
-                        <input type="checkbox" id="us-game-dh" class="us-admin-meta__checkbox"> Double header
+                        <input type="checkbox" id="us-game-dh" class="us-admin-meta__checkbox"> Optional pay rate
                     </label>
                 </div>
             </div>

@@ -34,22 +34,42 @@ function us_league_games_page( $league ) {
         if ( ! $filter_date ) $filter_date = end( $game_dates );
     }
 
+    $show_all  = ( $filter_date === 'all' );
+    $per_page  = 100;
+    $cur_page  = max( 1, absint( $_GET['paged'] ?? 1 ) );
+
     $meta_query = [
         [ 'key' => 'us_league_id', 'value' => $league->ID, 'compare' => '=' ],
     ];
-    if ( $filter_date ) {
+    if ( $filter_date && ! $show_all ) {
         $meta_query[] = [ 'key' => 'us_game_date', 'value' => $filter_date, 'compare' => '=' ];
     }
 
-    $games = get_posts( [
-        'post_type'   => US_PT_GAME,
-        'numberposts' => -1,
-        'meta_key'    => 'us_game_time',
-        'orderby'     => 'meta_value',
-        'order'       => 'ASC',
-        'post_status' => 'publish',
-        'meta_query'  => $meta_query,
-    ] );
+    if ( $show_all ) {
+        // Lightweight query — no assignment lookups needed for bulk view
+        $total_games = count( $all_games );
+        $total_pages = (int) ceil( $total_games / $per_page );
+        $cur_page    = min( $cur_page, max( 1, $total_pages ) );
+        $games = array_slice( $all_games, ( $cur_page - 1 ) * $per_page, $per_page );
+        // Sort slice by date then time
+        usort( $games, function( $a, $b ) {
+            $da = get_post_meta( $a->ID, 'us_game_date', true );
+            $db = get_post_meta( $b->ID, 'us_game_date', true );
+            if ( $da !== $db ) return strcmp( $da, $db );
+            return strcmp( get_post_meta( $a->ID, 'us_game_time', true ), get_post_meta( $b->ID, 'us_game_time', true ) );
+        } );
+    } else {
+        $total_pages = 1;
+        $games = get_posts( [
+            'post_type'   => US_PT_GAME,
+            'numberposts' => -1,
+            'meta_key'    => 'us_game_time',
+            'orderby'     => 'meta_value',
+            'order'       => 'ASC',
+            'post_status' => 'publish',
+            'meta_query'  => $meta_query,
+        ] );
+    }
 
     $all_umpires  = us_get_active_umpires();
     $unavail_ids  = $filter_date ? us_get_unavailable_umpires( $filter_date ) : [];
@@ -76,7 +96,7 @@ function us_league_games_page( $league ) {
             <span class="us-league-games-toolbar__meta">
                 <?php echo count( $all_games ); ?> total games
                 <?php if ( $pay_rate )    echo ' &middot; $' . number_format( $pay_rate, 2 )    . ' standard'; ?>
-                <?php if ( $dh_pay_rate ) echo ' &middot; $' . number_format( $dh_pay_rate, 2 ) . ' double header'; ?>
+                <?php if ( $dh_pay_rate ) echo ' &middot; $' . number_format( $dh_pay_rate, 2 ) . ' optional rate'; ?>
             </span>
             <a href="<?php echo admin_url( 'admin.php?page=us-ics-import' ); ?>" class="button">Import Schedule</a>
             <a href="<?php echo admin_url( 'post-new.php?post_type=' . US_PT_GAME ); ?>" class="button">Add Game</a>
@@ -102,6 +122,9 @@ function us_league_games_page( $league ) {
             <?php endif; ?>
 
             <select onchange="window.location='<?php echo $base_url; ?>'+this.value" class="us-league-games-date-select">
+                <option value="all" <?php selected( $filter_date, 'all' ); ?>>
+                    All games (<?php echo count( $all_games ); ?>)
+                </option>
                 <?php foreach ( $game_dates as $d ) :
                     $count = 0;
                     foreach ( $all_games as $g ) {
@@ -128,9 +151,91 @@ function us_league_games_page( $league ) {
         <?php if ( empty( $games ) ) : ?>
             <p>No games on this date.</p>
         <?php else : ?>
+
+        <!-- ── Bulk actions toolbar ─────────────────────────── -->
+        <div id="us-bulk-toolbar" style="display:none;align-items:center;gap:10px;margin-bottom:12px;background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:8px 12px;">
+            <span id="us-bulk-count" style="font-size:13px;color:#666;min-width:80px"></span>
+            <select id="us-bulk-action" style="font-size:13px;">
+                <option value="">— Bulk action —</option>
+                <option value="apply">Apply optional rate</option>
+                <option value="remove">Remove optional rate</option>
+            </select>
+            <button id="us-bulk-apply" class="button button-primary" style="font-size:13px;">Apply</button>
+            <button id="us-bulk-cancel" class="button" style="font-size:13px;">Cancel</button>
+        </div>
+
+        <?php if ( $show_all ) : ?>
+
+        <!-- ── Simplified all-games table ───────────────────── -->
         <table class="wp-list-table widefat fixed striped" id="us-games-table">
             <thead>
                 <tr>
+                    <th style="width:32px"><input type="checkbox" id="us-select-all" title="Select all"></th>
+                    <th style="width:90px">Date</th>
+                    <th style="width:80px">Time</th>
+                    <th>Game</th>
+                    <th style="width:150px">Field</th>
+                    <th style="width:120px">Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ( $games as $game ) :
+                    $g_date = get_post_meta( $game->ID, 'us_game_date', true );
+                    $g_time = get_post_meta( $game->ID, 'us_game_time', true );
+                    $home   = get_post_meta( $game->ID, 'us_home_team', true );
+                    $away   = get_post_meta( $game->ID, 'us_away_team', true );
+                    $field  = get_post_meta( $game->ID, 'us_field',     true );
+                    $is_dh  = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
+                ?>
+                <tr>
+                    <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
+                    <td style="font-size:12px"><?php echo $g_date ? esc_html( date( 'M j, Y', strtotime( $g_date ) ) ) : '—'; ?></td>
+                    <td><?php echo $g_time ? esc_html( date( 'g:i a', strtotime( $g_time ) ) ) : '—'; ?></td>
+                    <td><?php echo esc_html( $away . ' at ' . $home ); ?></td>
+                    <td><?php echo esc_html( $field ); ?></td>
+                    <td>
+                        <?php if ( $is_dh ) : ?>
+                            <span class="us-league-badge us-league-badge--dh">Optional rate</span>
+                        <?php else : ?>
+                            <span style="color:#999;font-size:12px">Standard</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <?php if ( $total_pages > 1 ) :
+            $all_url = admin_url( 'admin.php?page=us-league-games-' . $league->ID . '&game_date=all&paged=' );
+        ?>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+            <?php if ( $cur_page > 1 ) : ?>
+                <a href="<?php echo $all_url . ( $cur_page - 1 ); ?>" class="button">&larr; Prev</a>
+            <?php else : ?>
+                <button class="button" disabled>&larr; Prev</button>
+            <?php endif; ?>
+            <span style="font-size:13px;color:#666">
+                Page <?php echo $cur_page; ?> of <?php echo $total_pages; ?>
+                &nbsp;&middot;&nbsp;
+                <?php echo (( $cur_page - 1 ) * $per_page + 1 ); ?>–<?php echo min( $cur_page * $per_page, count( $all_games ) ); ?>
+                of <?php echo count( $all_games ); ?> games
+            </span>
+            <?php if ( $cur_page < $total_pages ) : ?>
+                <a href="<?php echo $all_url . ( $cur_page + 1 ); ?>" class="button">Next &rarr;</a>
+            <?php else : ?>
+                <button class="button" disabled>Next &rarr;</button>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php else : ?>
+
+        <!-- ── Full date-filtered table ──────────────────────── -->
+        <table class="wp-list-table widefat fixed striped" id="us-games-table">
+            <thead>
+                <tr>
+                    <th style="width:32px"><input type="checkbox" id="us-select-all" title="Select all"></th>
                     <th style="width:80px">Time</th>
                     <th>Game</th>
                     <th>Field</th>
@@ -185,6 +290,7 @@ function us_league_games_page( $league ) {
                     }
                 ?>
                 <tr <?php echo $is_postponed ? 'class="us-league-row--postponed"' : ''; ?>>
+                    <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
                     <td><?php echo $time ? esc_html( date( 'g:i a', strtotime( $time ) ) ) : '—'; ?></td>
                     <td>
                         <?php echo esc_html( $away . ' at ' . $home ); ?>
@@ -209,7 +315,7 @@ function us_league_games_page( $league ) {
                             <span class="us-admin-na">—</span>
                         <?php elseif ( $game_pay ) : ?>
                             $<?php echo number_format( floatval( $game_pay ), 2 ); ?>
-                            <?php if ( $is_dh ) : ?><span class="us-league-dh-rate">DH rate</span><?php endif; ?>
+                            <?php if ( $is_dh ) : ?><span class="us-league-dh-rate">Optional rate</span><?php endif; ?>
                         <?php else : ?>
                             <span class="us-admin-na">—</span>
                         <?php endif; ?>
@@ -236,6 +342,8 @@ function us_league_games_page( $league ) {
             </tbody>
         </table>
         <p class="us-league-games-footer"><?php echo count( $games ); ?> games on this date &middot; Assignments save automatically</p>
+
+        <?php endif; // $show_all ?>
         <?php endif; ?>
         <?php endif; ?>
     </div>
@@ -299,6 +407,63 @@ function us_postpone_modal() {
 
     <script>
     jQuery(function($){
+
+        // ── Bulk selection ────────────────────────────────────
+        function updateBulkToolbar() {
+            var checked = $('.us-game-checkbox:checked').length;
+            if ( checked > 0 ) {
+                $('#us-bulk-toolbar').css('display','flex');
+                $('#us-bulk-count').text( checked + ' game' + (checked !== 1 ? 's' : '') + ' selected' );
+            } else {
+                $('#us-bulk-toolbar').hide();
+                $('#us-bulk-action').val('');
+            }
+        }
+
+        $('#us-select-all').on('change', function() {
+            $('.us-game-checkbox').prop('checked', this.checked);
+            updateBulkToolbar();
+        });
+
+        $(document).on('change', '.us-game-checkbox', function() {
+            var total   = $('.us-game-checkbox').length;
+            var checked = $('.us-game-checkbox:checked').length;
+            $('#us-select-all').prop('checked', total === checked).prop('indeterminate', checked > 0 && checked < total);
+            updateBulkToolbar();
+        });
+
+        $('#us-bulk-cancel').on('click', function() {
+            $('.us-game-checkbox, #us-select-all').prop('checked', false);
+            $('#us-bulk-toolbar').hide();
+        });
+
+        $('#us-bulk-apply').on('click', function() {
+            var action = $('#us-bulk-action').val();
+            if ( ! action ) { alert('Please select a bulk action.'); return; }
+            var ids = $('.us-game-checkbox:checked').map(function(){ return $(this).val(); }).get();
+            if ( ! ids.length ) return;
+
+            var label = action === 'apply' ? 'Apply optional rate' : 'Remove optional rate';
+            if ( ! confirm( label + ' for ' + ids.length + ' game(s)?' ) ) return;
+
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('Saving...');
+
+            $.post(ajaxurl, {
+                action: 'us_bulk_optional_rate',
+                nonce: usAssign.nonce,
+                game_ids: ids,
+                bulk_action: action
+            }, function(res) {
+                if ( res.success ) {
+                    location.reload();
+                } else {
+                    alert('Error — could not apply bulk action.');
+                    $btn.prop('disabled', false).text('Apply');
+                }
+            });
+        });
+
         var postponeGameId = 0;
         $(document).on('click', '.us-postpone-game-btn', function(){
             postponeGameId = $(this).data('game');
@@ -322,6 +487,49 @@ function us_postpone_modal() {
     });
     </script>
     <?php
+}
+
+// ── Bulk optional rate AJAX ───────────────────────────────────
+add_action( 'wp_ajax_us_bulk_optional_rate', 'us_ajax_bulk_optional_rate' );
+function us_ajax_bulk_optional_rate() {
+    check_ajax_referer( 'us_assign_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+
+    $game_ids    = array_map( 'absint', $_POST['game_ids']    ?? [] );
+    $bulk_action = sanitize_text_field( $_POST['bulk_action'] ?? '' );
+
+    if ( empty( $game_ids ) || ! in_array( $bulk_action, [ 'apply', 'remove' ] ) ) {
+        wp_send_json_error( 'Invalid' );
+    }
+
+    $dh_value = $bulk_action === 'apply' ? '1' : '0';
+    $updated  = 0;
+
+    foreach ( $game_ids as $game_id ) {
+        update_post_meta( $game_id, 'us_double_header', $dh_value );
+
+        // Re-stamp assignment pay rates
+        $league_id = get_post_meta( $game_id, 'us_league_id', true );
+        $rate      = $bulk_action === 'apply'
+            ? get_post_meta( $league_id, 'us_dh_pay_rate', true )
+            : get_post_meta( $league_id, 'us_pay_rate',    true );
+
+        if ( $rate ) {
+            $assignments = get_posts( [
+                'post_type'   => US_PT_ASSIGNMENT,
+                'numberposts' => -1,
+                'post_status' => 'publish',
+                'meta_query'  => [ [ 'key' => 'us_game_id', 'value' => $game_id, 'compare' => '=' ] ],
+            ] );
+            foreach ( $assignments as $a ) {
+                update_post_meta( $a->ID, 'us_pay_amount', $rate );
+            }
+        }
+
+        $updated++;
+    }
+
+    wp_send_json_success( [ 'updated' => $updated ] );
 }
 
 // ── Assignment dropdown ───────────────────────────────────────

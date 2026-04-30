@@ -146,8 +146,8 @@ jQuery(function($){
             '<div style="align-self:center;padding-bottom:2px">' +
             '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#091b33;font-weight:500">' +
             '<input type="checkbox" class="us-edit-dh" value="1"' + ( dh === '1' ? ' checked' : '' ) + ' style="width:15px;height:15px;cursor:pointer">' +
-            'Double header</label>' +
-            '<span style="display:block;font-size:11px;color:#92400e;margin-top:3px;margin-left:21px">Uses DH pay rate</span>' +
+            'Optional pay rate</label>' +
+            '<span style="display:block;font-size:11px;color:#92400e;margin-top:3px;margin-left:21px">Uses optional pay rate</span>' +
             '</div>'
         );
         $inner.append(

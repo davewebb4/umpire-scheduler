@@ -24,7 +24,7 @@ function us_league_meta_cb( $post ) {
     // ── Inline re-apply notices ───────────────────────────────
     foreach ( [
         'us_pay_reapply_std_notice_' . $post->ID => [ 'rate' => $rate,    'label' => 'standard' ],
-        'us_pay_reapply_dh_notice_'  . $post->ID => [ 'rate' => $dh_rate, 'label' => 'double header' ],
+        'us_pay_reapply_dh_notice_'  . $post->ID => [ 'rate' => $dh_rate, 'label' => 'optional rate' ],
     ] as $key => $info ) {
         $count = get_transient( $key );
         if ( $count !== false ) {
@@ -104,15 +104,15 @@ function us_league_meta_cb( $post ) {
             </td>
         </tr>
 
-        <!-- Double header pay rate — hidden for tournaments -->
+        <!-- Optional pay rate — hidden for tournaments -->
         <tr class="us-dh-field<?php echo $is_tournament ? ' us-admin-meta__row--hidden' : ''; ?>">
-            <th><label for="us_dh_pay_rate">Double header pay rate ($)</label></th>
+            <th><label for="us_dh_pay_rate">Optional pay rate ($)</label></th>
             <td>
                 <input type="hidden" name="us_dh_pay_rate_previous" value="<?php echo esc_attr( $dh_rate ); ?>" />
                 <input type="number" id="us_dh_pay_rate" name="us_dh_pay_rate"
                        value="<?php echo esc_attr( $dh_rate ); ?>"
                        step="0.01" min="0" class="us-admin-meta__rate-input" />
-                <p class="description">Pay rate for double header games. If changed on save, all upcoming double header game assignments are automatically updated.</p>
+                <p class="description">An alternative pay rate for specific games in this league. If changed on save, all upcoming optional-rate game assignments are automatically updated.</p>
             </td>
         </tr>
 
@@ -190,7 +190,7 @@ function us_league_meta_cb( $post ) {
                     <p class="description us-admin-meta__reapply-desc">
                         <?php echo $is_tournament
                             ? 'Updates all assignments for this tournament regardless of status.'
-                            : 'Updates all upcoming assignments on non-double-header games regardless of status.';
+                            : 'Updates all upcoming assignments on standard-rate games regardless of status.';
                         ?>
                     </p>
                 </div>
@@ -199,10 +199,10 @@ function us_league_meta_cb( $post ) {
                 <?php if ( $dh_rate && ! $is_tournament ) : ?>
                 <div class="us-dh-field">
                     <button type="submit" name="us_reapply_dh_rate" value="1" class="button">
-                        Re-apply $<?php echo number_format( floatval( $dh_rate ), 2 ); ?> to all upcoming double header games
+                        Re-apply $<?php echo number_format( floatval( $dh_rate ), 2 ); ?> to all upcoming optional-rate games
                     </button>
                     <p class="description us-admin-meta__reapply-desc">
-                        Updates all upcoming assignments on double header games only regardless of status.
+                        Updates all upcoming assignments on optional-rate games only regardless of status.
                     </p>
                 </div>
                 <?php endif; ?>
@@ -372,7 +372,7 @@ function us_pay_update_notices() {
         ],
         'us_pay_auto_dh_notice_' . $post->ID => [
             'rate' => $dh_rate,
-            'msg'  => 'Double header rate changed — %d upcoming double header assignment(s) automatically updated to $%s per game.',
+            'msg'  => 'Optional rate changed — %d upcoming optional-rate assignment(s) automatically updated to $%s per game.',
         ],
     ];
 

@@ -78,18 +78,18 @@ function us_game_meta_cb( $post ) {
             </td>
         </tr>
         <tr id="us-dh-row" <?php echo $is_tournament ? 'class="us-admin-meta__row--hidden"' : ''; ?>>
-            <th><label for="us_double_header">Double header</label></th>
+            <th><label for="us_double_header">Optional pay rate</label></th>
             <td>
                 <label class="us-admin-meta__checkbox-label">
                     <input type="checkbox" id="us_double_header" name="us_double_header" value="1" <?php checked( $dh, '1' ); ?> />
-                    This is a double header game (2 &times; 7 innings)
+                    Use optional pay rate for this game
                 </label>
                 <p class="description" id="us-dh-desc">
-                    When enabled, umpire pay will use the league's double header rate
+                    When enabled, umpire pay will use the league's optional rate
                     <?php if ( $dh_rate ) : ?>
                         (currently <strong>$<?php echo number_format( floatval( $dh_rate ), 2 ); ?></strong>)
                     <?php else : ?>
-                        — <a href="<?php echo $league ? get_edit_post_link( $league ) : admin_url( 'edit.php?post_type=' . US_PT_LEAGUE ); ?>">set a double header rate on the league</a> first
+                        — <a href="<?php echo $league ? get_edit_post_link( $league ) : admin_url( 'edit.php?post_type=' . US_PT_LEAGUE ); ?>">set an optional rate on the league</a> first
                     <?php endif; ?>
                     instead of the standard rate.
                 </p>
@@ -182,7 +182,7 @@ function us_dh_restamp_notice() {
 
     delete_transient( 'us_dh_pay_restamped_' . $post->ID );
 
-    $action = $data['dh'] === '1' ? 'marked as a double header' : 'changed back to a standard game';
+    $action = $data['dh'] === '1' ? 'set to optional rate' : 'changed back to standard rate';
     echo '<div class="notice notice-success is-dismissible"><p>';
     echo '<strong>' . intval( $data['count'] ) . ' assignment(s) re-stamped to $' . number_format( floatval( $data['rate'] ), 2 ) . ' — game ' . $action . '.</strong>';
     echo '</p></div>';
