@@ -34,10 +34,12 @@ function us_league_games_page( $league ) {
         if ( ! $filter_date ) $filter_date = end( $game_dates );
     }
 
+    $show_all = ( $filter_date === 'all' );
+
     $meta_query = [
         [ 'key' => 'us_league_id', 'value' => $league->ID, 'compare' => '=' ],
     ];
-    if ( $filter_date ) {
+    if ( $filter_date && ! $show_all ) {
         $meta_query[] = [ 'key' => 'us_game_date', 'value' => $filter_date, 'compare' => '=' ];
     }
 
@@ -102,6 +104,9 @@ function us_league_games_page( $league ) {
             <?php endif; ?>
 
             <select onchange="window.location='<?php echo $base_url; ?>'+this.value" class="us-league-games-date-select">
+                <option value="all" <?php selected( $filter_date, 'all' ); ?>>
+                    All games (<?php echo count( $all_games ); ?>)
+                </option>
                 <?php foreach ( $game_dates as $d ) :
                     $count = 0;
                     foreach ( $all_games as $g ) {
@@ -145,6 +150,7 @@ function us_league_games_page( $league ) {
             <thead>
                 <tr>
                     <th style="width:32px"><input type="checkbox" id="us-select-all" title="Select all"></th>
+                    <?php if ( $show_all ) : ?><th style="width:110px">Date</th><?php endif; ?>
                     <th style="width:80px">Time</th>
                     <th>Game</th>
                     <th>Field</th>
@@ -200,6 +206,9 @@ function us_league_games_page( $league ) {
                 ?>
                 <tr <?php echo $is_postponed ? 'class="us-league-row--postponed"' : ''; ?>>
                     <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
+                    <?php if ( $show_all ) : ?>
+                    <td style="font-size:12px"><?php echo esc_html( date( 'M j', strtotime( get_post_meta( $game->ID, 'us_game_date', true ) ) ) ); ?></td>
+                    <?php endif; ?>
                     <td><?php echo $time ? esc_html( date( 'g:i a', strtotime( $time ) ) ) : '—'; ?></td>
                     <td>
                         <?php echo esc_html( $away . ' at ' . $home ); ?>
