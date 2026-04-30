@@ -4,8 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_shortcode( 'umpire_register', 'us_shortcode_umpire_register' );
 function us_shortcode_umpire_register() {
     if ( is_user_logged_in() ) {
-        wp_redirect( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) );
-        exit;
+        return '<script>window.location="' . esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ) . '";</script>';
     }
 
     $error   = '';
@@ -22,7 +21,8 @@ function us_shortcode_umpire_register() {
                 // Log in and redirect to dashboard
                 wp_set_current_user( $result );
                 wp_set_auth_cookie( $result );
-                wp_redirect( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) );
+                wp_set_current_user( $result );
+                echo '<script>window.location="' . esc_url( home_url( '/' . us_setting( 'slug_dashboard' ) . '/' ) ) . '";</script>';
                 exit;
             }
         }
