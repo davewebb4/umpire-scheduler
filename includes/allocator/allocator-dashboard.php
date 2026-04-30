@@ -652,7 +652,7 @@ function us_alloc_today_dh_card( $games, $today ) {
                         <span class="us-mgmt-card__meta-time">&#9679; <?php echo esc_html( date( 'g:i a', strtotime( $time ) ) ); ?></span>
                     <?php endif; ?>
                     <?php if ( $is_dh_meta ) : ?>
-                        <span class="us-alloc-games__badge us-alloc-games__badge--dh">DH rate</span>
+                        <span class="us-alloc-games__badge us-alloc-games__badge--dh">Optional rate</span>
                     <?php endif; ?>
                     <span class="us-mgmt-card__status <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
                 </div>
@@ -788,7 +788,7 @@ function us_alloc_unassigned_dh_card( $games, $today, $all_umpires ) {
                         <span class="us-mgmt-card__meta-time">&#9679; <?php echo esc_html( date( 'g:i a', strtotime( $game_time ) ) ); ?></span>
                     <?php endif; ?>
                     <?php if ( $is_dh_meta ) : ?>
-                        <span class="us-alloc-games__badge us-alloc-games__badge--dh">DH rate</span>
+                        <span class="us-alloc-games__badge us-alloc-games__badge--dh">Optional rate</span>
                     <?php endif; ?>
                 </div>
             </div>
