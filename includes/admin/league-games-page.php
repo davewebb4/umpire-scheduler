@@ -34,7 +34,9 @@ function us_league_games_page( $league ) {
         if ( ! $filter_date ) $filter_date = end( $game_dates );
     }
 
-    $show_all = ( $filter_date === 'all' );
+    $show_all  = ( $filter_date === 'all' );
+    $per_page  = 100;
+    $cur_page  = max( 1, absint( $_GET['paged'] ?? 1 ) );
 
     $meta_query = [
         [ 'key' => 'us_league_id', 'value' => $league->ID, 'compare' => '=' ],
@@ -43,15 +45,31 @@ function us_league_games_page( $league ) {
         $meta_query[] = [ 'key' => 'us_game_date', 'value' => $filter_date, 'compare' => '=' ];
     }
 
-    $games = get_posts( [
-        'post_type'   => US_PT_GAME,
-        'numberposts' => -1,
-        'meta_key'    => 'us_game_time',
-        'orderby'     => 'meta_value',
-        'order'       => 'ASC',
-        'post_status' => 'publish',
-        'meta_query'  => $meta_query,
-    ] );
+    if ( $show_all ) {
+        // Lightweight query — no assignment lookups needed for bulk view
+        $total_games = count( $all_games );
+        $total_pages = (int) ceil( $total_games / $per_page );
+        $cur_page    = min( $cur_page, max( 1, $total_pages ) );
+        $games = array_slice( $all_games, ( $cur_page - 1 ) * $per_page, $per_page );
+        // Sort slice by date then time
+        usort( $games, function( $a, $b ) {
+            $da = get_post_meta( $a->ID, 'us_game_date', true );
+            $db = get_post_meta( $b->ID, 'us_game_date', true );
+            if ( $da !== $db ) return strcmp( $da, $db );
+            return strcmp( get_post_meta( $a->ID, 'us_game_time', true ), get_post_meta( $b->ID, 'us_game_time', true ) );
+        } );
+    } else {
+        $total_pages = 1;
+        $games = get_posts( [
+            'post_type'   => US_PT_GAME,
+            'numberposts' => -1,
+            'meta_key'    => 'us_game_time',
+            'orderby'     => 'meta_value',
+            'order'       => 'ASC',
+            'post_status' => 'publish',
+            'meta_query'  => $meta_query,
+        ] );
+    }
 
     $all_umpires  = us_get_active_umpires();
     $unavail_ids  = $filter_date ? us_get_unavailable_umpires( $filter_date ) : [];
@@ -146,11 +164,78 @@ function us_league_games_page( $league ) {
             <button id="us-bulk-cancel" class="button" style="font-size:13px;">Cancel</button>
         </div>
 
+        <?php if ( $show_all ) : ?>
+
+        <!-- ── Simplified all-games table ───────────────────── -->
         <table class="wp-list-table widefat fixed striped" id="us-games-table">
             <thead>
                 <tr>
                     <th style="width:32px"><input type="checkbox" id="us-select-all" title="Select all"></th>
-                    <?php if ( $show_all ) : ?><th style="width:110px">Date</th><?php endif; ?>
+                    <th style="width:90px">Date</th>
+                    <th style="width:80px">Time</th>
+                    <th>Game</th>
+                    <th style="width:150px">Field</th>
+                    <th style="width:120px">Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ( $games as $game ) :
+                    $g_date = get_post_meta( $game->ID, 'us_game_date', true );
+                    $g_time = get_post_meta( $game->ID, 'us_game_time', true );
+                    $home   = get_post_meta( $game->ID, 'us_home_team', true );
+                    $away   = get_post_meta( $game->ID, 'us_away_team', true );
+                    $field  = get_post_meta( $game->ID, 'us_field',     true );
+                    $is_dh  = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
+                ?>
+                <tr>
+                    <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
+                    <td style="font-size:12px"><?php echo $g_date ? esc_html( date( 'M j, Y', strtotime( $g_date ) ) ) : '—'; ?></td>
+                    <td><?php echo $g_time ? esc_html( date( 'g:i a', strtotime( $g_time ) ) ) : '—'; ?></td>
+                    <td><?php echo esc_html( $away . ' at ' . $home ); ?></td>
+                    <td><?php echo esc_html( $field ); ?></td>
+                    <td>
+                        <?php if ( $is_dh ) : ?>
+                            <span class="us-league-badge us-league-badge--dh">Optional rate</span>
+                        <?php else : ?>
+                            <span style="color:#999;font-size:12px">Standard</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <?php if ( $total_pages > 1 ) :
+            $all_url = admin_url( 'admin.php?page=us-league-games-' . $league->ID . '&game_date=all&paged=' );
+        ?>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+            <?php if ( $cur_page > 1 ) : ?>
+                <a href="<?php echo $all_url . ( $cur_page - 1 ); ?>" class="button">&larr; Prev</a>
+            <?php else : ?>
+                <button class="button" disabled>&larr; Prev</button>
+            <?php endif; ?>
+            <span style="font-size:13px;color:#666">
+                Page <?php echo $cur_page; ?> of <?php echo $total_pages; ?>
+                &nbsp;&middot;&nbsp;
+                <?php echo (( $cur_page - 1 ) * $per_page + 1 ); ?>–<?php echo min( $cur_page * $per_page, count( $all_games ) ); ?>
+                of <?php echo count( $all_games ); ?> games
+            </span>
+            <?php if ( $cur_page < $total_pages ) : ?>
+                <a href="<?php echo $all_url . ( $cur_page + 1 ); ?>" class="button">Next &rarr;</a>
+            <?php else : ?>
+                <button class="button" disabled>Next &rarr;</button>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php else : ?>
+
+        <!-- ── Full date-filtered table ──────────────────────── -->
+        <table class="wp-list-table widefat fixed striped" id="us-games-table">
+            <thead>
+                <tr>
+                    <th style="width:32px"><input type="checkbox" id="us-select-all" title="Select all"></th>
                     <th style="width:80px">Time</th>
                     <th>Game</th>
                     <th>Field</th>
@@ -206,9 +291,6 @@ function us_league_games_page( $league ) {
                 ?>
                 <tr <?php echo $is_postponed ? 'class="us-league-row--postponed"' : ''; ?>>
                     <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
-                    <?php if ( $show_all ) : ?>
-                    <td style="font-size:12px"><?php echo esc_html( date( 'M j', strtotime( get_post_meta( $game->ID, 'us_game_date', true ) ) ) ); ?></td>
-                    <?php endif; ?>
                     <td><?php echo $time ? esc_html( date( 'g:i a', strtotime( $time ) ) ) : '—'; ?></td>
                     <td>
                         <?php echo esc_html( $away . ' at ' . $home ); ?>
@@ -260,6 +342,8 @@ function us_league_games_page( $league ) {
             </tbody>
         </table>
         <p class="us-league-games-footer"><?php echo count( $games ); ?> games on this date &middot; Assignments save automatically</p>
+
+        <?php endif; // $show_all ?>
         <?php endif; ?>
         <?php endif; ?>
     </div>
