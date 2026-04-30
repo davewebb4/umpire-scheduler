@@ -613,6 +613,13 @@
     font-size: 12px;
 }
 
+.us-og-btn--booked {
+    background: #f0f0f0;
+    color: #999 !important;
+    cursor: default;
+    font-size: 12px;
+}
+
 .us-og-btn--cancel {
     background: var(--us-danger);
     color: #fff !important;
