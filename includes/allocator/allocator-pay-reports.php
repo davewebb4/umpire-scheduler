@@ -121,40 +121,44 @@ function us_shortcode_allocator_pay_reports() {
 
             if ( ! isset( $months[ $month_key ] ) ) {
                 $months[ $month_key ] = [
-                    'label'      => $month_label,
-                    'games'      => 0,
-                    'allocator'  => 0,
-                    'admin'      => 0,
-                    'total'      => 0,
+                    'label'        => $month_label,
+                    'games'        => 0,
+                    'unique_games' => 0,
+                    'allocator'    => 0,
+                    'admin'        => 0,
+                    'total'        => 0,
                 ];
             }
 
-            $months[ $month_key ]['games']     += $game_count;
-            $months[ $month_key ]['allocator'] += $allocator_rate * $game_count;
-            $months[ $month_key ]['admin']     += $admin_rate     * $game_count;
-            $months[ $month_key ]['total']     += ( $allocator_rate + $admin_rate ) * $game_count;
+            $months[ $month_key ]['games']        += $game_count;
+            $months[ $month_key ]['unique_games']  += 1;
+            $months[ $month_key ]['allocator']     += $allocator_rate * $game_count;
+            $months[ $month_key ]['admin']         += $admin_rate     * $game_count;
+            $months[ $month_key ]['total']         += ( $allocator_rate + $admin_rate ) * $game_count;
         }
 
         if ( empty( $months ) ) continue;
 
         ksort( $months );
 
-        $league_allocator = array_sum( array_column( $months, 'allocator' ) );
-        $league_admin     = array_sum( array_column( $months, 'admin' ) );
-        $league_total     = array_sum( array_column( $months, 'total' ) );
+        $league_allocator     = array_sum( array_column( $months, 'allocator' ) );
+        $league_admin         = array_sum( array_column( $months, 'admin' ) );
+        $league_total         = array_sum( array_column( $months, 'total' ) );
+        $league_unique_games  = array_sum( array_column( $months, 'unique_games' ) );
 
         $grand_allocator_total += $league_allocator;
         $grand_admin_total     += $league_admin;
         $grand_fees_total      += $league_total;
 
         $admin_fee_data[] = [
-            'league'           => $league,
-            'allocator_rate'   => $allocator_rate,
-            'admin_rate'       => $admin_rate,
-            'months'           => $months,
-            'league_allocator' => $league_allocator,
-            'league_admin'     => $league_admin,
-            'league_total'     => $league_total,
+            'league'              => $league,
+            'allocator_rate'      => $allocator_rate,
+            'admin_rate'          => $admin_rate,
+            'months'              => $months,
+            'league_allocator'    => $league_allocator,
+            'league_admin'        => $league_admin,
+            'league_total'        => $league_total,
+            'league_unique_games' => $league_unique_games,
         ];
     }
 
@@ -203,40 +207,44 @@ function us_shortcode_allocator_pay_reports() {
 
             if ( ! isset( $months[ $month_key ] ) ) {
                 $months[ $month_key ] = [
-                    'label'     => $month_label,
-                    'games'     => 0,
-                    'allocator' => 0,
-                    'admin'     => 0,
-                    'total'     => 0,
+                    'label'        => $month_label,
+                    'games'        => 0,
+                    'unique_games' => 0,
+                    'allocator'    => 0,
+                    'admin'        => 0,
+                    'total'        => 0,
                 ];
             }
 
-            $months[ $month_key ]['games']     += $game_count;
-            $months[ $month_key ]['allocator'] += $allocator_rate * $game_count;
-            $months[ $month_key ]['admin']     += $admin_rate     * $game_count;
-            $months[ $month_key ]['total']     += ( $allocator_rate + $admin_rate ) * $game_count;
+            $months[ $month_key ]['games']        += $game_count;
+            $months[ $month_key ]['unique_games']  += 1;
+            $months[ $month_key ]['allocator']     += $allocator_rate * $game_count;
+            $months[ $month_key ]['admin']         += $admin_rate     * $game_count;
+            $months[ $month_key ]['total']         += ( $allocator_rate + $admin_rate ) * $game_count;
         }
 
         if ( empty( $months ) ) continue;
 
         ksort( $months );
 
-        $league_allocator = array_sum( array_column( $months, 'allocator' ) );
-        $league_admin     = array_sum( array_column( $months, 'admin' ) );
-        $league_total     = array_sum( array_column( $months, 'total' ) );
+        $league_allocator    = array_sum( array_column( $months, 'allocator' ) );
+        $league_admin        = array_sum( array_column( $months, 'admin' ) );
+        $league_total        = array_sum( array_column( $months, 'total' ) );
+        $league_unique_games = array_sum( array_column( $months, 'unique_games' ) );
 
         $grand_tourney_alloc_total += $league_allocator;
         $grand_tourney_admin_total += $league_admin;
         $grand_tourney_fees_total  += $league_total;
 
         $tourney_fee_data[] = [
-            'league'           => $league,
-            'allocator_rate'   => $allocator_rate,
-            'admin_rate'       => $admin_rate,
-            'months'           => $months,
-            'league_allocator' => $league_allocator,
-            'league_admin'     => $league_admin,
-            'league_total'     => $league_total,
+            'league'              => $league,
+            'allocator_rate'      => $allocator_rate,
+            'admin_rate'          => $admin_rate,
+            'months'              => $months,
+            'league_allocator'    => $league_allocator,
+            'league_admin'        => $league_admin,
+            'league_total'        => $league_total,
+            'league_unique_games' => $league_unique_games,
         ];
     }
 
@@ -481,6 +489,10 @@ function us_shortcode_allocator_pay_reports() {
                 </div>
                 <div class="us-pay-block__header-right">
                     <span class="us-pay-block__paid">Season total: $<?php echo number_format( $entry['league_total'], 2 ); ?></span>
+                    <?php
+                    $inv_contact_name  = get_post_meta( $league->ID, 'us_contact_name',  true );
+                    $inv_contact_email = get_post_meta( $league->ID, 'us_contact_email', true );
+                    ?>
                 </div>
             </div>
             <table>
@@ -495,6 +507,7 @@ function us_shortcode_allocator_pay_reports() {
                             <th>Admin fees</th>
                         <?php endif; ?>
                         <th>Month total</th>
+                        <th>Invoice</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -509,6 +522,17 @@ function us_shortcode_allocator_pay_reports() {
                             <td data-label="Admin fees">$<?php echo number_format( $month['admin'], 2 ); ?></td>
                         <?php endif; ?>
                         <td data-label="Month total"><strong>$<?php echo number_format( $month['total'], 2 ); ?></strong></td>
+                        <td>
+                            <button class="us-btn us-btn--muted us-btn--sm us-invoice-btn"
+                                    data-league-id="<?php echo $league->ID; ?>"
+                                    data-league-name="<?php echo esc_attr( $league->post_title ); ?>"
+                                    data-period="<?php echo esc_attr( $month['label'] ); ?>"
+                                    data-games="<?php echo $month['unique_games']; ?>"
+                                    data-contact-name="<?php echo esc_attr( $inv_contact_name ); ?>"
+                                    data-contact-email="<?php echo esc_attr( $inv_contact_email ); ?>">
+                                Invoice
+                            </button>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
 
@@ -523,6 +547,17 @@ function us_shortcode_allocator_pay_reports() {
                             <td>$<?php echo number_format( $entry['league_admin'], 2 ); ?></td>
                         <?php endif; ?>
                         <td>$<?php echo number_format( $entry['league_total'], 2 ); ?></td>
+                        <td>
+                            <button class="us-btn us-btn--muted us-btn--sm us-invoice-btn"
+                                    data-league-id="<?php echo $league->ID; ?>"
+                                    data-league-name="<?php echo esc_attr( $league->post_title ); ?>"
+                                    data-period="Full season"
+                                    data-games="<?php echo $entry['league_unique_games']; ?>"
+                                    data-contact-name="<?php echo esc_attr( $inv_contact_name ); ?>"
+                                    data-contact-email="<?php echo esc_attr( $inv_contact_email ); ?>">
+                                Invoice
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -573,6 +608,24 @@ function us_shortcode_allocator_pay_reports() {
                 </div>
                 <div class="us-pay-block__header-right">
                     <span class="us-pay-block__paid">Season total: $<?php echo number_format( $entry['league_total'], 2 ); ?></span>
+                    <?php
+                    $t_contact_name  = get_post_meta( $league->ID, 'us_contact_name',  true );
+                    $t_contact_email = get_post_meta( $league->ID, 'us_contact_email', true );
+                    $t_start  = get_post_meta( $league->ID, 'us_tourney_start', true );
+                    $t_end    = get_post_meta( $league->ID, 'us_tourney_end',   true );
+                    $t_period = ( $t_start && $t_end )
+                        ? date( 'M j', strtotime( $t_start ) ) . ' – ' . date( 'M j, Y', strtotime( $t_end ) )
+                        : $league->post_title;
+                    ?>
+                    <button class="us-btn us-btn--muted us-btn--sm us-invoice-btn"
+                            data-league-id="<?php echo $league->ID; ?>"
+                            data-league-name="<?php echo esc_attr( $league->post_title ); ?>"
+                            data-period="<?php echo esc_attr( $t_period ); ?>"
+                            data-games="<?php echo $entry['league_unique_games']; ?>"
+                            data-contact-name="<?php echo esc_attr( $t_contact_name ); ?>"
+                            data-contact-email="<?php echo esc_attr( $t_contact_email ); ?>">
+                        Invoice
+                    </button>
                 </div>
             </div>
             <table>
@@ -788,6 +841,302 @@ function us_shortcode_allocator_pay_reports() {
             </form>
         </div>
     </div>
+
+    <!-- ── Invoice modal ──────────────────────────────────────── -->
+    <div id="us-invoice-modal" class="us-modal">
+        <div class="us-modal__inner" style="max-width:460px;padding:0;overflow:hidden;">
+
+            <!-- Coloured header -->
+            <div style="background:var(--us-primary);padding:18px 24px;">
+                <h3 style="margin:0;color:#fff;font-size:17px;font-weight:700;">Generate Invoice</h3>
+                <p id="us-inv-modal-meta" style="margin:4px 0 0;color:#aac4e0;font-size:13px;"></p>
+            </div>
+
+            <div style="padding:20px 24px;">
+                <table class="us-modal__table">
+                    <tr>
+                        <th>Games</th>
+                        <td><strong id="us-inv-modal-games" style="font-size:16px;color:var(--us-primary);"></strong></td>
+                    </tr>
+                    <tr>
+                        <th>Rate per game ($)</th>
+                        <td>
+                            <input type="number" id="us-inv-modal-rate" min="0" step="0.01"
+                                   placeholder="e.g. 85.00"
+                                   style="width:140px;padding:7px 10px;font-size:14px;border:1px solid #c8d4e0;border-radius:5px;outline:none;">
+                        </td>
+                    </tr>
+                    <tr id="us-inv-modal-total-row" style="display:none;">
+                        <th>Invoice total</th>
+                        <td>
+                            <strong id="us-inv-modal-total"
+                                    style="font-size:18px;font-weight:700;color:var(--us-primary);"></strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Notes <span style="font-weight:400;color:#aaa;">(opt.)</span></th>
+                        <td>
+                            <textarea id="us-inv-modal-notes" rows="2"
+                                      style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #c8d4e0;border-radius:5px;resize:vertical;box-sizing:border-box;"></textarea>
+                        </td>
+                    </tr>
+                </table>
+                <p id="us-inv-modal-status" style="font-size:13px;min-height:18px;margin:10px 0 0;"></p>
+
+                <!-- Stacked buttons -->
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+                    <button id="us-inv-download-btn" class="us-btn us-btn-confirm" style="justify-content:center;">Print / Save as PDF</button>
+                    <button id="us-inv-email-btn" class="us-btn us-btn-request" style="display:none;justify-content:center;"></button>
+                    <button id="us-inv-modal-cancel" class="us-btn us-btn--muted" style="justify-content:center;">Cancel</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Invoice render target — populated by JS, printed via iframe -->
+    <div id="us-invoice-render" style="display:none;width:780px;background:#fff;padding:48px 52px;font-family:Arial,sans-serif;color:#333;font-size:13px;line-height:1.5;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:3px solid #1a3a5c;margin-bottom:28px;">
+            <?php
+            $logo_id  = get_theme_mod( 'custom_logo' );
+            $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+            $org_name = us_setting( 'org_name' ) ?: us_setting( 'org_short' );
+            ?>
+            <?php if ( $logo_url ) : ?>
+                <img src="<?php echo esc_url( $logo_url ); ?>" style="max-height:55px;max-width:180px;object-fit:contain;">
+            <?php else : ?>
+                <div style="font-size:20px;font-weight:700;color:#1a3a5c;"><?php echo esc_html( $org_name ); ?></div>
+            <?php endif; ?>
+            <div style="text-align:right;">
+                <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;">Invoice</div>
+                <div id="us-inv-r-num" style="font-size:18px;font-weight:700;color:#1a3a5c;margin-top:2px;"></div>
+            </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:28px;gap:20px;">
+            <div>
+                <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Bill To</div>
+                <div id="us-inv-r-league" style="font-size:15px;font-weight:700;color:#1a3a5c;"></div>
+                <div id="us-inv-r-contact" style="font-size:12px;color:#555;margin-top:3px;line-height:1.6;"></div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Details</div>
+                <div id="us-inv-r-details" style="font-size:12px;color:#555;line-height:1.8;"></div>
+            </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+            <thead>
+                <tr style="background:#f0f4f8;">
+                    <th style="padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#555;text-align:left;border-bottom:2px solid #dde3ea;">Description</th>
+                    <th style="padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#555;text-align:center;border-bottom:2px solid #dde3ea;width:70px;">Games</th>
+                    <th style="padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#555;text-align:right;border-bottom:2px solid #dde3ea;width:85px;">Rate</th>
+                    <th style="padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#555;text-align:right;border-bottom:2px solid #dde3ea;width:95px;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:12px 10px;border-bottom:1px solid #f0f0f0;">
+                        Umpire services — <span id="us-inv-r-desc-league"></span>
+                        <div id="us-inv-r-period" style="font-size:11px;color:#888;margin-top:2px;"></div>
+                    </td>
+                    <td id="us-inv-r-games" style="padding:12px 10px;text-align:center;border-bottom:1px solid #f0f0f0;"></td>
+                    <td id="us-inv-r-rate" style="padding:12px 10px;text-align:right;border-bottom:1px solid #f0f0f0;"></td>
+                    <td id="us-inv-r-amount" style="padding:12px 10px;text-align:right;border-bottom:1px solid #f0f0f0;"></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="padding:12px 10px;text-align:right;font-weight:700;font-size:13px;color:#1a3a5c;border-top:2px solid #1a3a5c;">Total Due</td>
+                    <td id="us-inv-r-total" style="padding:12px 10px;text-align:right;font-size:20px;font-weight:700;color:#1a3a5c;border-top:2px solid #1a3a5c;"></td>
+                </tr>
+            </tfoot>
+        </table>
+        <div id="us-inv-r-notes-wrap" style="display:none;margin-top:20px;padding:12px 14px;background:#f8f9fa;border-radius:5px;border-left:3px solid #1a3a5c;">
+            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Notes</div>
+            <div id="us-inv-r-notes" style="font-size:12px;color:#555;"></div>
+        </div>
+        <div style="margin-top:28px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#bbb;text-align:center;">
+            Issued by <?php echo esc_html( us_setting( 'assignor_name' ) ?: $org_name ); ?> &bull; <?php echo esc_html( $org_name ); ?>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        var modal       = document.getElementById('us-invoice-modal');
+        var rateInp     = document.getElementById('us-inv-modal-rate');
+        var notesInp    = document.getElementById('us-inv-modal-notes');
+        var totalRow    = document.getElementById('us-inv-modal-total-row');
+        var totalEl     = document.getElementById('us-inv-modal-total');
+        var gamesEl     = document.getElementById('us-inv-modal-games');
+        var metaEl      = document.getElementById('us-inv-modal-meta');
+        var statusEl    = document.getElementById('us-inv-modal-status');
+        var downloadBtn = document.getElementById('us-inv-download-btn');
+        var emailBtn    = document.getElementById('us-inv-email-btn');
+        var cancelBtn   = document.getElementById('us-inv-modal-cancel');
+
+        var current = {};
+
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.us-invoice-btn');
+            if (!btn) return;
+            current = {
+                leagueId:     btn.dataset.leagueId,
+                leagueName:   btn.dataset.leagueName,
+                period:       btn.dataset.period,
+                games:        parseInt(btn.dataset.games, 10),
+                contactName:  btn.dataset.contactName,
+                contactEmail: btn.dataset.contactEmail,
+            };
+            metaEl.textContent  = current.leagueName + ' — ' + current.period;
+            gamesEl.textContent = current.games;
+            rateInp.value       = '';
+            notesInp.value      = '';
+            totalRow.style.display = 'none';
+            statusEl.textContent   = '';
+            statusEl.style.color   = '';
+
+            if (current.contactEmail) {
+                var label = current.contactName ? current.contactName : current.contactEmail;
+                emailBtn.textContent  = '✉ Send to ' + label;
+                emailBtn.style.display = '';
+            } else {
+                emailBtn.style.display = 'none';
+            }
+
+            modal.style.display = 'flex';
+            setTimeout(function(){ rateInp.focus(); }, 50);
+        });
+
+        rateInp.addEventListener('input', function() {
+            var r = parseFloat(this.value) || 0;
+            if (r > 0 && current.games > 0) {
+                totalEl.textContent    = '$' + (r * current.games).toFixed(2);
+                totalRow.style.display = '';
+            } else {
+                totalRow.style.display = 'none';
+            }
+        });
+
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+        function closeModal() { modal.style.display = 'none'; }
+
+        function getInvNum() {
+            return '<?php echo esc_js( strtoupper( us_setting('org_short') ?: 'INV' ) ); ?>-' +
+                   new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+        }
+
+        function populateRender(rate, notes, invNum) {
+            var total = (current.games * rate).toFixed(2);
+            var inv   = document.getElementById('us-invoice-render');
+
+            inv.querySelector('#us-inv-r-num').textContent        = invNum;
+            inv.querySelector('#us-inv-r-league').textContent     = current.leagueName;
+            inv.querySelector('#us-inv-r-desc-league').textContent = current.leagueName;
+            inv.querySelector('#us-inv-r-period').textContent     = current.period;
+            inv.querySelector('#us-inv-r-games').textContent      = current.games;
+            inv.querySelector('#us-inv-r-rate').textContent       = '$' + parseFloat(rate).toFixed(2);
+            inv.querySelector('#us-inv-r-amount').textContent     = '$' + total;
+            inv.querySelector('#us-inv-r-total').textContent      = '$' + total;
+
+            var contact = '';
+            if (current.contactName)  contact += current.contactName + '\n';
+            if (current.contactEmail) contact += current.contactEmail;
+            inv.querySelector('#us-inv-r-contact').innerText = contact;
+
+            var details = 'Invoice: ' + invNum + '\nDate: ' + new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'}) + '\nPeriod: ' + current.period;
+            inv.querySelector('#us-inv-r-details').innerText = details;
+
+            var notesWrap = inv.querySelector('#us-inv-r-notes-wrap');
+            if (notes.trim()) {
+                inv.querySelector('#us-inv-r-notes').textContent = notes;
+                notesWrap.style.display = '';
+            } else {
+                notesWrap.style.display = 'none';
+            }
+        }
+
+        downloadBtn.addEventListener('click', function() {
+            var rate = parseFloat(rateInp.value);
+            if (!rate || rate <= 0) { alert('Please enter a rate per game.'); rateInp.focus(); return; }
+
+            var notes  = notesInp.value.trim();
+            var invNum = getInvNum();
+            populateRender(rate, notes, invNum);
+
+            var btn = this;
+            btn.disabled = true;
+            var el = document.getElementById('us-invoice-render');
+
+            // Open invoice in a new tab — user can review and use File > Save as PDF
+            var invoiceHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+                + '<title>' + invNum + '</title>'
+                + '<style>'
+                + 'body{margin:20mm 15mm;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+                + 'table{border-collapse:collapse;width:100%;}'
+                + '@page{size:letter;margin:15mm;}'
+                + '</style>'
+                + '</head><body>'
+                + el.innerHTML
+                + '</body></html>';
+
+            var blob = new Blob([invoiceHTML], { type: 'text/html;charset=utf-8' });
+            var url  = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            setTimeout(function() { URL.revokeObjectURL(url); }, 15000);
+
+            closeModal();
+        });
+
+        emailBtn.addEventListener('click', function() {
+            var rate = parseFloat(rateInp.value);
+            if (!rate || rate <= 0) { alert('Please enter a rate per game.'); rateInp.focus(); return; }
+
+            var notes  = notesInp.value.trim();
+            var invNum = getInvNum();
+
+            if (!confirm('Send invoice ' + invNum + ' to ' + current.contactEmail + '?')) return;
+
+            var btn = this;
+            btn.disabled    = true;
+            btn.textContent = 'Sending…';
+            statusEl.textContent = '';
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                headers: { 'Content-Type':'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action:     'us_send_invoice',
+                    nonce:      '<?php echo wp_create_nonce('us_assign_nonce'); ?>',
+                    league_id:  current.leagueId,
+                    inv_num:    invNum,
+                    inv_date:   new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'}),
+                    period:     current.period,
+                    game_count: current.games,
+                    rate:       rate,
+                    notes:      notes,
+                })
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if (res.success) {
+                    closeModal();
+                    alert('Invoice sent to ' + current.contactEmail);
+                } else {
+                    statusEl.style.color = '#b32d2e';
+                    statusEl.textContent = (res.data || 'Send failed — please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Send email';
+                }
+            })
+            .catch(function(){
+                statusEl.style.color = '#b32d2e';
+                statusEl.textContent = 'Network error — please try again.';
+                btn.disabled = false;
+                btn.textContent = 'Send email';
+            });
+        });
+    })();
+    </script>
 
     <?php
     return ob_get_clean();
