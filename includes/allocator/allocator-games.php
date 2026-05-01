@@ -2,14 +2,20 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ── Conflict detection ────────────────────────────────────────
-// Flags an umpire as double-booked only when confirmed at a DIFFERENT field on the same day.
-// Same field = same diamond (DH is fine). Only flags when both fields are non-empty and differ.
+// Flags a double-booking only when the umpire is confirmed at a DIFFERENT field on the same day
+// AND the game windows overlap (games are treated as 75 minutes long).
+// Same field at any time = same diamond = fine.
+define( 'US_GAME_DURATION_MINS', 75 );
+
 function us_umpire_has_date_conflict( $umpire_id, $game_id, $date, $field ) {
     static $cache = [];
     if ( ! $umpire_id || ! $date || ! $field ) return false;
 
     $cache_key = $umpire_id . '_' . $game_id . '_' . $date;
     if ( array_key_exists( $cache_key, $cache ) ) return $cache[ $cache_key ];
+
+    $game_time    = get_post_meta( $game_id, 'us_game_time', true );
+    $game_mins    = $game_time ? ( (int) date( 'G', strtotime( $game_time ) ) * 60 + (int) date( 'i', strtotime( $game_time ) ) ) : null;
 
     $same_day = get_posts( [
         'post_type'   => US_PT_GAME,
@@ -19,11 +25,19 @@ function us_umpire_has_date_conflict( $umpire_id, $game_id, $date, $field ) {
         'meta_query'  => [ [ 'key' => 'us_game_date', 'value' => $date, 'compare' => '=' ] ],
     ] );
 
-    // Only consider games at a different, non-empty field
-    $other_games = array_values( array_filter( $same_day, function( $id ) use ( $game_id, $field ) {
+    // Keep only games at a different non-empty field whose 75-min window overlaps this game's window
+    $other_games = array_values( array_filter( $same_day, function( $id ) use ( $game_id, $field, $game_mins ) {
         if ( (int) $id === (int) $game_id ) return false;
         $other_field = get_post_meta( $id, 'us_field', true );
-        return $other_field && $other_field !== $field;
+        if ( ! $other_field || $other_field === $field ) return false;
+
+        // If either game has no time, assume the worst and flag it
+        $other_time = get_post_meta( $id, 'us_game_time', true );
+        if ( $game_mins === null || ! $other_time ) return true;
+
+        $other_mins = (int) date( 'G', strtotime( $other_time ) ) * 60 + (int) date( 'i', strtotime( $other_time ) );
+        // Two 75-min windows overlap when start times are less than 75 min apart
+        return abs( $game_mins - $other_mins ) < US_GAME_DURATION_MINS;
     } ) );
 
     if ( empty( $other_games ) ) {
