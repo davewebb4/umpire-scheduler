@@ -159,6 +159,7 @@ function us_league_games_page( $league ) {
                 <option value="">— Bulk action —</option>
                 <option value="apply">Apply optional rate</option>
                 <option value="remove">Remove optional rate</option>
+                <option value="delete" style="color:#b32d2e;">Delete games</option>
             </select>
             <button id="us-bulk-apply" class="button button-primary" style="font-size:13px;">Apply</button>
             <button id="us-bulk-cancel" class="button" style="font-size:13px;">Cancel</button>
@@ -443,10 +444,29 @@ function us_postpone_modal() {
             var ids = $('.us-game-checkbox:checked').map(function(){ return $(this).val(); }).get();
             if ( ! ids.length ) return;
 
+            var $btn = $(this);
+
+            if ( action === 'delete' ) {
+                if ( ! confirm( 'Permanently delete ' + ids.length + ' game(s) and all their assignments? This cannot be undone.' ) ) return;
+                $btn.prop('disabled', true).text('Deleting...');
+                $.post(ajaxurl, {
+                    action: 'us_bulk_delete_games',
+                    nonce: usAssign.nonce,
+                    game_ids: ids,
+                }, function(res) {
+                    if ( res.success ) {
+                        location.reload();
+                    } else {
+                        alert('Error — could not delete games.');
+                        $btn.prop('disabled', false).text('Apply');
+                    }
+                });
+                return;
+            }
+
             var label = action === 'apply' ? 'Apply optional rate' : 'Remove optional rate';
             if ( ! confirm( label + ' for ' + ids.length + ' game(s)?' ) ) return;
 
-            var $btn = $(this);
             $btn.prop('disabled', true).text('Saving...');
 
             $.post(ajaxurl, {
@@ -530,6 +550,33 @@ function us_ajax_bulk_optional_rate() {
     }
 
     wp_send_json_success( [ 'updated' => $updated ] );
+}
+
+// ── Bulk delete games AJAX ────────────────────────────────────
+add_action( 'wp_ajax_us_bulk_delete_games', 'us_ajax_bulk_delete_games' );
+function us_ajax_bulk_delete_games() {
+    check_ajax_referer( 'us_assign_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+
+    $game_ids = array_map( 'absint', $_POST['game_ids'] ?? [] );
+    if ( empty( $game_ids ) ) wp_send_json_error( 'No games specified' );
+
+    foreach ( $game_ids as $game_id ) {
+        // Delete all assignments for this game first
+        $assignments = get_posts( [
+            'post_type'   => US_PT_ASSIGNMENT,
+            'numberposts' => -1,
+            'post_status' => 'any',
+            'fields'      => 'ids',
+            'meta_query'  => [ [ 'key' => 'us_game_id', 'value' => $game_id, 'compare' => '=' ] ],
+        ] );
+        foreach ( $assignments as $a_id ) {
+            wp_delete_post( $a_id, true );
+        }
+        wp_delete_post( $game_id, true );
+    }
+
+    wp_send_json_success( [ 'deleted' => count( $game_ids ) ] );
 }
 
 // ── Assignment dropdown ───────────────────────────────────────
