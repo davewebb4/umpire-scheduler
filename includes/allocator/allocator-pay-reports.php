@@ -844,40 +844,53 @@ function us_shortcode_allocator_pay_reports() {
 
     <!-- ── Invoice modal ──────────────────────────────────────── -->
     <div id="us-invoice-modal" class="us-modal">
-        <div class="us-modal__inner" style="max-width:440px;">
-            <h3 class="us-modal__title">Generate Invoice</h3>
-            <p id="us-inv-modal-meta" class="us-modal__sublabel"></p>
-            <table class="us-modal__table">
-                <tr>
-                    <th>Games</th>
-                    <td><strong id="us-inv-modal-games"></strong></td>
-                </tr>
-                <tr>
-                    <th>Rate per game ($)</th>
-                    <td>
-                        <input type="number" id="us-inv-modal-rate" min="0" step="0.01"
-                               placeholder="e.g. 85.00"
-                               style="width:130px;padding:6px 8px;font-size:14px;border:1px solid #ddd;border-radius:4px;">
-                    </td>
-                </tr>
-                <tr id="us-inv-modal-total-row" style="display:none;">
-                    <th>Total</th>
-                    <td><strong id="us-inv-modal-total" style="font-size:16px;color:#1a3a5c;"></strong></td>
-                </tr>
-                <tr>
-                    <th>Notes <span style="font-weight:400;color:#999;">(opt.)</span></th>
-                    <td>
-                        <textarea id="us-inv-modal-notes" rows="2"
-                                  style="width:100%;padding:6px 8px;font-size:13px;border:1px solid #ddd;border-radius:4px;resize:vertical;"></textarea>
-                    </td>
-                </tr>
-            </table>
-            <p id="us-inv-modal-status" style="font-size:13px;min-height:18px;margin:8px 0 0;"></p>
-            <div class="us-modal__actions">
-                <button id="us-inv-download-btn" class="us-btn us-btn-confirm">&#8659; Download PDF</button>
-                <button id="us-inv-email-btn" class="us-btn us-btn-request" style="display:none;"></button>
-                <button id="us-inv-modal-cancel" class="us-btn us-btn--muted">Cancel</button>
+        <div class="us-modal__inner" style="max-width:460px;padding:0;overflow:hidden;">
+
+            <!-- Coloured header -->
+            <div style="background:var(--us-primary);padding:18px 24px;">
+                <h3 style="margin:0;color:#fff;font-size:17px;font-weight:700;">Generate Invoice</h3>
+                <p id="us-inv-modal-meta" style="margin:4px 0 0;color:#aac4e0;font-size:13px;"></p>
             </div>
+
+            <div style="padding:20px 24px;">
+                <table class="us-modal__table">
+                    <tr>
+                        <th>Games</th>
+                        <td><strong id="us-inv-modal-games" style="font-size:16px;color:var(--us-primary);"></strong></td>
+                    </tr>
+                    <tr>
+                        <th>Rate per game ($)</th>
+                        <td>
+                            <input type="number" id="us-inv-modal-rate" min="0" step="0.01"
+                                   placeholder="e.g. 85.00"
+                                   style="width:140px;padding:7px 10px;font-size:14px;border:1px solid #c8d4e0;border-radius:5px;outline:none;">
+                        </td>
+                    </tr>
+                    <tr id="us-inv-modal-total-row" style="display:none;">
+                        <th>Invoice total</th>
+                        <td>
+                            <strong id="us-inv-modal-total"
+                                    style="font-size:18px;font-weight:700;color:var(--us-primary);"></strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Notes <span style="font-weight:400;color:#aaa;">(opt.)</span></th>
+                        <td>
+                            <textarea id="us-inv-modal-notes" rows="2"
+                                      style="width:100%;padding:7px 10px;font-size:13px;border:1px solid #c8d4e0;border-radius:5px;resize:vertical;box-sizing:border-box;"></textarea>
+                        </td>
+                    </tr>
+                </table>
+                <p id="us-inv-modal-status" style="font-size:13px;min-height:18px;margin:10px 0 0;"></p>
+
+                <!-- Stacked buttons — avoids overflow on long contact names -->
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+                    <button id="us-inv-download-btn" class="us-btn us-btn-confirm" style="justify-content:center;">&#8659; Download PDF</button>
+                    <button id="us-inv-email-btn" class="us-btn us-btn-request" style="display:none;justify-content:center;"></button>
+                    <button id="us-inv-modal-cancel" class="us-btn us-btn--muted" style="justify-content:center;">Cancel</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
