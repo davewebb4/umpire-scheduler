@@ -27,17 +27,18 @@ function us_ajax_send_invoice() {
     $from_email    = us_setting( 'assignor_email' );
     $total         = $game_count * $rate;
 
-    $subject = 'Invoice ' . $inv_num . ' — ' . esc_html( $league->post_title ) . ' — ' . $period;
-
-    $body  = us_invoice_email_html( $league, $inv_num, $inv_date, $period, $game_count, $rate, $notes, $org_name, $assignor_name );
-
+    $subject = 'Invoice ' . $inv_num . ' — ' . $league->post_title . ' — ' . $period;
+    $body    = us_invoice_email_html( $league, $inv_num, $inv_date, $period, $game_count, $rate, $notes, $org_name, $assignor_name );
     $headers = [
-        'Content-Type: text/html; charset=UTF-8',
         'From: ' . ( $assignor_name ?: $org_name ) . ' <' . $from_email . '>',
         'Cc: ' . $from_email,
     ];
 
+    // Force HTML content type — more reliable than passing it in headers
+    add_filter( 'wp_mail_content_type', 'us_invoice_mail_html_type' );
     $sent = wp_mail( $contact_email, $subject, $body, $headers );
+    remove_filter( 'wp_mail_content_type', 'us_invoice_mail_html_type' );
+
     if ( $sent ) {
         wp_send_json_success( 'Invoice sent to ' . $contact_email );
     } else {
@@ -45,77 +46,104 @@ function us_ajax_send_invoice() {
     }
 }
 
+function us_invoice_mail_html_type() { return 'text/html'; }
+
 // ── Invoice email HTML ────────────────────────────────────────
 function us_invoice_email_html( $league, $inv_num, $inv_date, $period, $game_count, $rate, $notes, $org_name, $assignor_name ) {
     $total         = $game_count * $rate;
     $contact_name  = get_post_meta( $league->ID, 'us_contact_name',  true );
     $contact_email = get_post_meta( $league->ID, 'us_contact_email', true );
     $contact_phone = get_post_meta( $league->ID, 'us_contact_phone', true );
+    $issued_by     = $assignor_name ?: $org_name;
 
+    // Flat, single-table layout — maximum email client compatibility
     ob_start(); ?>
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:30px 0;">
-  <tr><td align="center">
-    <table width="620" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-      <tr><td style="background:#1a3a5c;padding:28px 36px;">
-        <p style="margin:0;color:#fff;font-size:22px;font-weight:700;"><?php echo esc_html( $org_name ); ?></p>
-        <p style="margin:6px 0 0;color:#aac4e0;font-size:13px;">INVOICE</p>
-      </td></tr>
-      <tr><td style="padding:28px 36px;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td valign="top" width="50%">
-              <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;">Bill To</p>
-              <p style="margin:0;font-size:15px;font-weight:700;color:#1a3a5c;"><?php echo esc_html( $league->post_title ); ?></p>
-              <?php if ( $contact_name )  echo '<p style="margin:2px 0 0;font-size:13px;color:#444;">' . esc_html( $contact_name )  . '</p>'; ?>
-              <?php if ( $contact_email ) echo '<p style="margin:2px 0 0;font-size:13px;color:#444;">' . esc_html( $contact_email ) . '</p>'; ?>
-              <?php if ( $contact_phone ) echo '<p style="margin:2px 0 0;font-size:13px;color:#444;">' . esc_html( $contact_phone ) . '</p>'; ?>
-            </td>
-            <td valign="top" width="50%" align="right">
-              <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;">Invoice Details</p>
-              <p style="margin:0;font-size:15px;font-weight:700;color:#1a3a5c;"><?php echo esc_html( $inv_num ); ?></p>
-              <p style="margin:2px 0 0;font-size:13px;color:#444;">Date: <?php echo esc_html( $inv_date ); ?></p>
-              <p style="margin:2px 0 0;font-size:13px;color:#444;">Period: <?php echo esc_html( $period ); ?></p>
-            </td>
-          </tr>
-        </table>
+<table cellpadding="0" cellspacing="0" border="0" width="600" style="font-family:Arial,sans-serif;font-size:14px;color:#333;margin:0 auto;">
 
-        <table width="100%" cellpadding="10" cellspacing="0" style="margin-top:28px;border-collapse:collapse;">
-          <tr style="background:#f0f4f8;">
-            <td style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #dde3ea;">Description</td>
-            <td align="center" style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #dde3ea;width:70px;">Games</td>
-            <td align="right" style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #dde3ea;width:90px;">Rate</td>
-            <td align="right" style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #dde3ea;width:100px;">Amount</td>
-          </tr>
-          <tr>
-            <td style="font-size:14px;color:#333;border-bottom:1px solid #eee;">Umpire services — <?php echo esc_html( $league->post_title ); ?><br><span style="font-size:12px;color:#888;"><?php echo esc_html( $period ); ?></span></td>
-            <td align="center" style="font-size:14px;color:#333;border-bottom:1px solid #eee;"><?php echo $game_count; ?></td>
-            <td align="right" style="font-size:14px;color:#333;border-bottom:1px solid #eee;">$<?php echo number_format( $rate, 2 ); ?></td>
-            <td align="right" style="font-size:14px;color:#333;border-bottom:1px solid #eee;">$<?php echo number_format( $total, 2 ); ?></td>
-          </tr>
-          <tr>
-            <td colspan="3" align="right" style="padding-top:14px;font-size:14px;font-weight:700;color:#1a3a5c;">Total Due</td>
-            <td align="right" style="padding-top:14px;font-size:18px;font-weight:700;color:#1a3a5c;">$<?php echo number_format( $total, 2 ); ?></td>
-          </tr>
-        </table>
+  <!-- Header -->
+  <tr>
+    <td colspan="2" bgcolor="#091b33" style="background-color:#091b33;padding:20px 28px;">
+      <p style="margin:0;font-size:20px;font-weight:bold;color:#ffffff;"><?php echo esc_html( $org_name ); ?></p>
+      <p style="margin:4px 0 0;font-size:12px;color:#aac4e0;letter-spacing:1px;">INVOICE <?php echo esc_html( $inv_num ); ?></p>
+    </td>
+  </tr>
 
-        <?php if ( $notes ) : ?>
-        <div style="margin-top:20px;padding:14px;background:#f8f9fa;border-radius:6px;border-left:3px solid #1a3a5c;">
-          <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;">Notes</p>
-          <p style="margin:0;font-size:13px;color:#444;"><?php echo nl2br( esc_html( $notes ) ); ?></p>
-        </div>
-        <?php endif; ?>
+  <!-- Spacer -->
+  <tr><td colspan="2" height="20"></td></tr>
 
-        <p style="margin:28px 0 0;font-size:13px;color:#888;">Issued by <?php echo esc_html( $assignor_name ?: $org_name ); ?> on behalf of <?php echo esc_html( $org_name ); ?>.</p>
-      </td></tr>
-    </table>
-  </td></tr>
+  <!-- Bill To / Details -->
+  <tr>
+    <td valign="top" width="50%" style="padding:0 28px 0 28px;">
+      <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;">Bill To</p>
+      <p style="margin:0;font-size:15px;font-weight:bold;color:#091b33;"><?php echo esc_html( $league->post_title ); ?></p>
+      <?php if ( $contact_name )  : ?><p style="margin:3px 0 0;font-size:13px;color:#555;"><?php echo esc_html( $contact_name ); ?></p><?php endif; ?>
+      <?php if ( $contact_email ) : ?><p style="margin:3px 0 0;font-size:13px;color:#555;"><?php echo esc_html( $contact_email ); ?></p><?php endif; ?>
+      <?php if ( $contact_phone ) : ?><p style="margin:3px 0 0;font-size:13px;color:#555;"><?php echo esc_html( $contact_phone ); ?></p><?php endif; ?>
+    </td>
+    <td valign="top" width="50%" align="right" style="padding:0 28px 0 0;">
+      <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;">Invoice Details</p>
+      <p style="margin:0;font-size:13px;color:#555;">Date: <?php echo esc_html( $inv_date ); ?></p>
+      <p style="margin:3px 0 0;font-size:13px;color:#555;">Period: <?php echo esc_html( $period ); ?></p>
+      <p style="margin:3px 0 0;font-size:13px;color:#555;">From: <?php echo esc_html( $issued_by ); ?></p>
+    </td>
+  </tr>
+
+  <!-- Spacer -->
+  <tr><td colspan="2" height="24"></td></tr>
+
+  <!-- Line item table -->
+  <tr>
+    <td colspan="2" style="padding:0 28px;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+        <tr bgcolor="#f0f4f8" style="background-color:#f0f4f8;">
+          <td style="padding:9px 10px;font-size:11px;font-weight:bold;color:#555;text-transform:uppercase;border-bottom:2px solid #dde3ea;">Description</td>
+          <td align="center" style="padding:9px 10px;font-size:11px;font-weight:bold;color:#555;text-transform:uppercase;border-bottom:2px solid #dde3ea;width:60px;">Games</td>
+          <td align="right" style="padding:9px 10px;font-size:11px;font-weight:bold;color:#555;text-transform:uppercase;border-bottom:2px solid #dde3ea;width:80px;">Rate</td>
+          <td align="right" style="padding:9px 10px;font-size:11px;font-weight:bold;color:#555;text-transform:uppercase;border-bottom:2px solid #dde3ea;width:90px;">Amount</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">
+            Umpire services &mdash; <?php echo esc_html( $league->post_title ); ?><br>
+            <span style="font-size:12px;color:#888;"><?php echo esc_html( $period ); ?></span>
+          </td>
+          <td align="center" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;"><?php echo intval( $game_count ); ?></td>
+          <td align="right" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $rate, 2 ); ?></td>
+          <td align="right" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $total, 2 ); ?></td>
+        </tr>
+        <tr>
+          <td colspan="3" align="right" style="padding:14px 10px 4px;font-size:13px;font-weight:bold;color:#091b33;">Total Due</td>
+          <td align="right" style="padding:14px 10px 4px;font-size:20px;font-weight:bold;color:#091b33;">$<?php echo number_format( $total, 2 ); ?></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <?php if ( $notes ) : ?>
+  <!-- Notes -->
+  <tr><td colspan="2" height="16"></td></tr>
+  <tr>
+    <td colspan="2" style="padding:0 28px;">
+      <table cellpadding="12" cellspacing="0" border="0" width="100%" bgcolor="#f8f9fa" style="background-color:#f8f9fa;border-left:3px solid #091b33;">
+        <tr>
+          <td>
+            <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;">Notes</p>
+            <p style="margin:0;font-size:13px;color:#555;"><?php echo nl2br( esc_html( $notes ) ); ?></p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <?php endif; ?>
+
+  <!-- Footer -->
+  <tr><td colspan="2" height="24"></td></tr>
+  <tr>
+    <td colspan="2" style="padding:16px 28px;border-top:1px solid #eee;">
+      <p style="margin:0;font-size:12px;color:#aaa;text-align:center;">Issued by <?php echo esc_html( $issued_by ); ?> &bull; <?php echo esc_html( $org_name ); ?></p>
+    </td>
+  </tr>
+
 </table>
-</body>
-</html>
     <?php
     return ob_get_clean();
 }

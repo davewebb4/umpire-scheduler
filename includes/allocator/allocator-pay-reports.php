@@ -883,9 +883,9 @@ function us_shortcode_allocator_pay_reports() {
                 </table>
                 <p id="us-inv-modal-status" style="font-size:13px;min-height:18px;margin:10px 0 0;"></p>
 
-                <!-- Stacked buttons — avoids overflow on long contact names -->
+                <!-- Stacked buttons -->
                 <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
-                    <button id="us-inv-download-btn" class="us-btn us-btn-confirm" style="justify-content:center;">&#128438; Print / Save as PDF</button>
+                    <button id="us-inv-download-btn" class="us-btn us-btn-confirm" style="justify-content:center;">Print / Save as PDF</button>
                     <button id="us-inv-email-btn" class="us-btn us-btn-request" style="display:none;justify-content:center;"></button>
                     <button id="us-inv-modal-cancel" class="us-btn us-btn--muted" style="justify-content:center;">Cancel</button>
                 </div>
@@ -1065,17 +1065,13 @@ function us_shortcode_allocator_pay_reports() {
 
             var btn = this;
             btn.disabled = true;
-            btn.disabled    = true;
-            btn.textContent = 'Opening…';
-
             var el = document.getElementById('us-invoice-render');
 
-            // Build a complete HTML document from the render div and print it
-            // via a hidden iframe — browser handles PDF output natively.
+            // Open invoice in a new tab — user can review and use File > Save as PDF
             var invoiceHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
                 + '<title>' + invNum + '</title>'
                 + '<style>'
-                + 'body{margin:0;padding:0;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+                + 'body{margin:20mm 15mm;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
                 + 'table{border-collapse:collapse;width:100%;}'
                 + '@page{size:letter;margin:15mm;}'
                 + '</style>'
@@ -1083,27 +1079,12 @@ function us_shortcode_allocator_pay_reports() {
                 + el.innerHTML
                 + '</body></html>';
 
-            var iframe = document.createElement('iframe');
-            iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
-            document.body.appendChild(iframe);
+            var blob = new Blob([invoiceHTML], { type: 'text/html;charset=utf-8' });
+            var url  = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            setTimeout(function() { URL.revokeObjectURL(url); }, 15000);
 
-            var iDoc = iframe.contentWindow.document;
-            iDoc.open();
-            iDoc.write(invoiceHTML);
-            iDoc.close();
-
-            // Short delay to let the iframe render before printing
-            setTimeout(function() {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(function() {
-                    document.body.removeChild(iframe);
-                }, 1000);
-                btn.disabled    = false;
-                btn.textContent = '&#128438; Print / Save as PDF';
-                statusEl.style.color = '#0a6b0a';
-                statusEl.textContent = '✓ Print dialog opened — choose "Save as PDF" as the destination';
-            }, 300);
+            closeModal();
         });
 
         emailBtn.addEventListener('click', function() {
@@ -1138,21 +1119,20 @@ function us_shortcode_allocator_pay_reports() {
             .then(function(r){ return r.json(); })
             .then(function(res){
                 if (res.success) {
-                    statusEl.style.color = '#0a6b0a';
-                    statusEl.textContent = '✓ ' + res.data;
-                    btn.textContent = '✓ Sent';
+                    closeModal();
+                    alert('Invoice sent to ' + current.contactEmail);
                 } else {
                     statusEl.style.color = '#b32d2e';
-                    statusEl.textContent = '✗ ' + (res.data || 'Send failed');
+                    statusEl.textContent = (res.data || 'Send failed — please try again.');
                     btn.disabled = false;
-                    btn.textContent = 'Retry email';
+                    btn.textContent = 'Send email';
                 }
             })
             .catch(function(){
                 statusEl.style.color = '#b32d2e';
-                statusEl.textContent = '✗ Network error';
+                statusEl.textContent = 'Network error — please try again.';
                 btn.disabled = false;
-                btn.textContent = 'Retry email';
+                btn.textContent = 'Send email';
             });
         });
     })();
