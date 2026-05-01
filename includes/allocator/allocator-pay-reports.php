@@ -885,7 +885,7 @@ function us_shortcode_allocator_pay_reports() {
 
                 <!-- Stacked buttons — avoids overflow on long contact names -->
                 <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
-                    <button id="us-inv-download-btn" class="us-btn us-btn-confirm" style="justify-content:center;">&#8659; Download PDF</button>
+                    <button id="us-inv-download-btn" class="us-btn us-btn-confirm" style="justify-content:center;">&#128438; Print / Save as PDF</button>
                     <button id="us-inv-email-btn" class="us-btn us-btn-request" style="display:none;justify-content:center;"></button>
                     <button id="us-inv-modal-cancel" class="us-btn us-btn--muted" style="justify-content:center;">Cancel</button>
                 </div>
@@ -894,8 +894,8 @@ function us_shortcode_allocator_pay_reports() {
         </div>
     </div>
 
-    <!-- Hidden invoice render target for PDF generation -->
-    <div id="us-invoice-render" style="position:absolute;left:-9999px;top:0;width:780px;background:#fff;padding:48px 52px;font-family:Arial,sans-serif;color:#333;font-size:13px;line-height:1.5;">
+    <!-- Invoice render target — populated by JS, printed via iframe -->
+    <div id="us-invoice-render" style="display:none;width:780px;background:#fff;padding:48px 52px;font-family:Arial,sans-serif;color:#333;font-size:13px;line-height:1.5;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:3px solid #1a3a5c;margin-bottom:28px;">
             <?php
             $logo_id  = get_theme_mod( 'custom_logo' );
@@ -959,7 +959,6 @@ function us_shortcode_allocator_pay_reports() {
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
     (function(){
         var modal       = document.getElementById('us-invoice-modal');
@@ -1066,28 +1065,45 @@ function us_shortcode_allocator_pay_reports() {
 
             var btn = this;
             btn.disabled = true;
-            btn.textContent = 'Generating…';
+            btn.disabled    = true;
+            btn.textContent = 'Opening…';
 
             var el = document.getElementById('us-invoice-render');
 
-            // html2canvas requires the element to be in the viewport to render.
-            // Bring it on-screen but fully transparent, then restore after.
-            var savedStyle = el.getAttribute('style');
-            el.style.cssText = 'position:fixed;top:0;left:0;width:780px;z-index:-9999;opacity:0.01;pointer-events:none;background:#fff;padding:48px 52px;font-family:Arial,sans-serif;color:#333;font-size:13px;line-height:1.5;';
+            // Build a complete HTML document from the render div and print it
+            // via a hidden iframe — browser handles PDF output natively.
+            var invoiceHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+                + '<title>' + invNum + '</title>'
+                + '<style>'
+                + 'body{margin:0;padding:0;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+                + 'table{border-collapse:collapse;width:100%;}'
+                + '@page{size:letter;margin:15mm;}'
+                + '</style>'
+                + '</head><body>'
+                + el.innerHTML
+                + '</body></html>';
 
-            html2pdf().set({
-                margin:      [10,10,10,10],
-                filename:    invNum + '.pdf',
-                image:       { type:'jpeg', quality:0.98 },
-                html2canvas: { scale:2, useCORS:true, logging:false },
-                jsPDF:       { unit:'mm', format:'letter', orientation:'portrait' }
-            }).from(el).save().then(function(){
-                el.setAttribute('style', savedStyle);
+            var iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+            document.body.appendChild(iframe);
+
+            var iDoc = iframe.contentWindow.document;
+            iDoc.open();
+            iDoc.write(invoiceHTML);
+            iDoc.close();
+
+            // Short delay to let the iframe render before printing
+            setTimeout(function() {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(function() {
+                    document.body.removeChild(iframe);
+                }, 1000);
                 btn.disabled    = false;
-                btn.textContent = '⬇ Download PDF';
-                statusEl.style.color   = '#0a6b0a';
-                statusEl.textContent   = '✓ PDF downloaded as ' + invNum + '.pdf';
-            });
+                btn.textContent = '&#128438; Print / Save as PDF';
+                statusEl.style.color = '#0a6b0a';
+                statusEl.textContent = '✓ Print dialog opened — choose "Save as PDF" as the destination';
+            }, 300);
         });
 
         emailBtn.addEventListener('click', function() {
