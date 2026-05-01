@@ -2,9 +2,11 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ── Conflict detection ────────────────────────────────────────
-function us_umpire_has_date_conflict( $umpire_id, $game_id, $date ) {
+// Flags an umpire as double-booked only when confirmed at a DIFFERENT field on the same day.
+// Same field = same diamond (DH is fine). Only flags when both fields are non-empty and differ.
+function us_umpire_has_date_conflict( $umpire_id, $game_id, $date, $field ) {
     static $cache = [];
-    if ( ! $umpire_id || ! $date ) return false;
+    if ( ! $umpire_id || ! $date || ! $field ) return false;
 
     $cache_key = $umpire_id . '_' . $game_id . '_' . $date;
     if ( array_key_exists( $cache_key, $cache ) ) return $cache[ $cache_key ];
@@ -16,7 +18,13 @@ function us_umpire_has_date_conflict( $umpire_id, $game_id, $date ) {
         'fields'      => 'ids',
         'meta_query'  => [ [ 'key' => 'us_game_date', 'value' => $date, 'compare' => '=' ] ],
     ] );
-    $other_games = array_values( array_filter( $same_day, fn( $id ) => (int) $id !== (int) $game_id ) );
+
+    // Only consider games at a different, non-empty field
+    $other_games = array_values( array_filter( $same_day, function( $id ) use ( $game_id, $field ) {
+        if ( (int) $id === (int) $game_id ) return false;
+        $other_field = get_post_meta( $id, 'us_field', true );
+        return $other_field && $other_field !== $field;
+    } ) );
 
     if ( empty( $other_games ) ) {
         return $cache[ $cache_key ] = false;
@@ -361,8 +369,8 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             $base_umpire_id  = $base  ? (int) get_post_meta( $base->ID,  'us_umpire_id', true ) : 0;
             $plate_name      = $plate_umpire_id ? get_the_title( $plate_umpire_id ) : null;
             $base_name       = $base_umpire_id  ? get_the_title( $base_umpire_id )  : null;
-            $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date ) : false;
-            $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date ) : false;
+            $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date, $g_field ) : false;
+            $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date, $g_field ) : false;
             $plate_reqs      = us_get_slot_requests( $game->ID, 'plate' );
             $base_reqs       = us_get_slot_requests( $game->ID, 'base' );
 
@@ -484,8 +492,8 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
     $base_umpire_id  = $base  ? (int) get_post_meta( $base->ID,  'us_umpire_id', true ) : 0;
     $plate_name      = $plate_umpire_id ? get_the_title( $plate_umpire_id ) : null;
     $base_name       = $base_umpire_id  ? get_the_title( $base_umpire_id )  : null;
-    $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date ) : false;
-    $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date ) : false;
+    $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date, $field ) : false;
+    $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date, $field ) : false;
 
     $plate_reqs = us_get_slot_requests( $game->ID, 'plate' );
     $base_reqs  = us_get_slot_requests( $game->ID, 'base' );
