@@ -1,6 +1,42 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// ── Conflict detection ────────────────────────────────────────
+function us_umpire_has_date_conflict( $umpire_id, $game_id, $date ) {
+    static $cache = [];
+    if ( ! $umpire_id || ! $date ) return false;
+
+    $cache_key = $umpire_id . '_' . $game_id . '_' . $date;
+    if ( array_key_exists( $cache_key, $cache ) ) return $cache[ $cache_key ];
+
+    $same_day = get_posts( [
+        'post_type'   => US_PT_GAME,
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'fields'      => 'ids',
+        'meta_query'  => [ [ 'key' => 'us_game_date', 'value' => $date, 'compare' => '=' ] ],
+    ] );
+    $other_games = array_values( array_filter( $same_day, fn( $id ) => (int) $id !== (int) $game_id ) );
+
+    if ( empty( $other_games ) ) {
+        return $cache[ $cache_key ] = false;
+    }
+
+    $conflict = get_posts( [
+        'post_type'   => US_PT_ASSIGNMENT,
+        'numberposts' => 1,
+        'post_status' => 'publish',
+        'fields'      => 'ids',
+        'meta_query'  => [
+            [ 'key' => 'us_umpire_id', 'value' => $umpire_id,   'compare' => '='  ],
+            [ 'key' => 'us_game_id',   'value' => $other_games, 'compare' => 'IN' ],
+            [ 'key' => 'us_status',    'value' => 'confirmed',  'compare' => '='  ],
+        ],
+    ] );
+
+    return $cache[ $cache_key ] = ! empty( $conflict );
+}
+
 // ── AJAX: Add game ────────────────────────────────────────────
 add_action( 'wp_ajax_us_allocator_add_game', 'us_ajax_allocator_add_game' );
 function us_ajax_allocator_add_game() {
@@ -321,8 +357,12 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
 
             $plate           = us_get_confirmed_assignment( $game->ID, 'plate' );
             $base            = us_get_confirmed_assignment( $game->ID, 'base' );
-            $plate_name      = $plate ? get_the_title( get_post_meta( $plate->ID, 'us_umpire_id', true ) ) : null;
-            $base_name       = $base  ? get_the_title( get_post_meta( $base->ID,  'us_umpire_id', true ) ) : null;
+            $plate_umpire_id = $plate ? (int) get_post_meta( $plate->ID, 'us_umpire_id', true ) : 0;
+            $base_umpire_id  = $base  ? (int) get_post_meta( $base->ID,  'us_umpire_id', true ) : 0;
+            $plate_name      = $plate_umpire_id ? get_the_title( $plate_umpire_id ) : null;
+            $base_name       = $base_umpire_id  ? get_the_title( $base_umpire_id )  : null;
+            $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date ) : false;
+            $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date ) : false;
             $plate_reqs      = us_get_slot_requests( $game->ID, 'plate' );
             $base_reqs       = us_get_slot_requests( $game->ID, 'base' );
 
@@ -403,12 +443,12 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             <div class="us-mgmt-card__umpires">
                 <div class="us-mgmt-card__slot">
                     <span class="us-mgmt-card__slot-label">Plate</span>
-                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_postponed ); ?>
+                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $plate_conflict ); ?>
                 </div>
                 <?php if ( $two_umps ) : ?>
                 <div class="us-mgmt-card__slot">
                     <span class="us-mgmt-card__slot-label">Base</span>
-                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_postponed ); ?>
+                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $base_conflict ); ?>
                 </div>
                 <?php endif; ?>
             </div>
@@ -440,10 +480,12 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
 
     $plate           = us_get_confirmed_assignment( $game->ID, 'plate' );
     $base            = us_get_confirmed_assignment( $game->ID, 'base' );
-    $plate_umpire_id = $plate ? get_post_meta( $plate->ID, 'us_umpire_id', true ) : 0;
-    $base_umpire_id  = $base  ? get_post_meta( $base->ID,  'us_umpire_id', true ) : 0;
+    $plate_umpire_id = $plate ? (int) get_post_meta( $plate->ID, 'us_umpire_id', true ) : 0;
+    $base_umpire_id  = $base  ? (int) get_post_meta( $base->ID,  'us_umpire_id', true ) : 0;
     $plate_name      = $plate_umpire_id ? get_the_title( $plate_umpire_id ) : null;
     $base_name       = $base_umpire_id  ? get_the_title( $base_umpire_id )  : null;
+    $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date ) : false;
+    $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date ) : false;
 
     $plate_reqs = us_get_slot_requests( $game->ID, 'plate' );
     $base_reqs  = us_get_slot_requests( $game->ID, 'base' );
@@ -571,12 +613,12 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
         <div class="us-mgmt-card__umpires">
             <div class="us-mgmt-card__slot">
                 <span class="us-mgmt-card__slot-label">Plate</span>
-                <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_postponed ); ?>
+                <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $plate_conflict ); ?>
             </div>
             <?php if ( $two_umps ) : ?>
             <div class="us-mgmt-card__slot">
                 <span class="us-mgmt-card__slot-label">Base</span>
-                <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_postponed ); ?>
+                <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $base_conflict ); ?>
             </div>
             <?php endif; ?>
         </div>
@@ -808,7 +850,7 @@ function us_mgmt_game_js( $first_league_id = '' ) {
 }
 
 // ── Umpire cell helper ────────────────────────────────────────
-function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment, $requests, $avail, $busy, $pending_uids, $is_past, $is_postponed ) {
+function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment, $requests, $avail, $busy, $pending_uids, $is_past, $is_postponed, $is_conflict = false ) {
     ob_start();
 
     if ( $is_postponed ) {
@@ -821,6 +863,9 @@ function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment
     if ( $name ) : ?>
         <div class="us-alloc-games__assigned-cell">
             <span class="us-status-confirmed">&#10003; <?php echo esc_html( $name ); ?></span>
+            <?php if ( $is_conflict ) : ?>
+                <span class="us-alloc__conflict-badge" title="This umpire is confirmed on another game today">&#9888; Double booked</span>
+            <?php endif; ?>
             <button type="button" class="us-games-clear-btn us-alloc__noshow-btn"
                     data-game="<?php echo $game_id; ?>" data-position="<?php echo $position; ?>">Clear</button>
         </div>
