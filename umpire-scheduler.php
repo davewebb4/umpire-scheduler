@@ -63,6 +63,7 @@ require_once US_PATH . 'includes/allocator/allocator-broadcast.php';
 require_once US_PATH . 'includes/allocator/allocator-pay-reports.php';
 require_once US_PATH . 'includes/allocator/allocator-umpire-history.php';
 require_once US_PATH . 'includes/allocator/xlsx-export.php';
+require_once US_PATH . 'includes/allocator/allocator-invoices.php';
 
 // ── Public pages ──────────────────────────────────────────────
 require_once US_PATH . 'includes/public/umpire-home.php';
