@@ -1069,15 +1069,20 @@ function us_shortcode_allocator_pay_reports() {
             btn.textContent = 'Generating…';
 
             var el = document.getElementById('us-invoice-render');
-            el.style.left = '-9999px';
+
+            // html2canvas requires the element to be in the viewport to render.
+            // Bring it on-screen but fully transparent, then restore after.
+            var savedStyle = el.getAttribute('style');
+            el.style.cssText = 'position:fixed;top:0;left:0;width:780px;z-index:-9999;opacity:0.01;pointer-events:none;background:#fff;padding:48px 52px;font-family:Arial,sans-serif;color:#333;font-size:13px;line-height:1.5;';
 
             html2pdf().set({
                 margin:      [10,10,10,10],
                 filename:    invNum + '.pdf',
                 image:       { type:'jpeg', quality:0.98 },
-                html2canvas: { scale:2, useCORS:true },
+                html2canvas: { scale:2, useCORS:true, logging:false },
                 jsPDF:       { unit:'mm', format:'letter', orientation:'portrait' }
             }).from(el).save().then(function(){
+                el.setAttribute('style', savedStyle);
                 btn.disabled    = false;
                 btn.textContent = '⬇ Download PDF';
                 statusEl.style.color   = '#0a6b0a';
