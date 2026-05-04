@@ -114,7 +114,9 @@ function us_wizard_create_pages() {
 
     foreach ( $pages as $slug => $page ) {
         $existing = get_page_by_path( $slug );
-        if ( ! $existing ) {
+        if ( $existing ) {
+            $id = $existing->ID;
+        } else {
             $id = wp_insert_post( [
                 'post_title'   => $page['title'],
                 'post_name'    => $slug,
@@ -122,6 +124,10 @@ function us_wizard_create_pages() {
                 'post_status'  => 'publish',
                 'post_type'    => 'page',
             ] );
+        }
+        // Apply the plugin's canvas template to every app page
+        if ( $id && ! is_wp_error( $id ) ) {
+            update_post_meta( $id, '_wp_page_template', 'umpire-app-page' );
         }
         $settings[ $page['setting'] ] = $slug;
     }
