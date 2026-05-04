@@ -105,6 +105,7 @@ function us_wizard_create_pages() {
         'tournament-management'  => [ 'title' => 'Tournament Management',   'shortcode' => '[tournament_management]',   'setting' => 'slug_allocator_tournament_games' ],
         'allocator-umpire-history' => [ 'title' => 'Umpire History',        'shortcode' => '[allocator_umpire_history]','setting' => 'slug_allocator_umpire_history' ],
         'allocator-broadcast'      => [ 'title' => 'Broadcast Message',     'shortcode' => '[allocator_broadcast]',     'setting' => 'slug_allocator_broadcast' ],
+        'invoices'                 => [ 'title' => 'Invoices',               'shortcode' => '[allocator_invoices]',      'setting' => 'slug_allocator_invoices' ],
         'umpire-register'          => [ 'title' => 'Create Account',         'shortcode' => '[umpire_register]',         'setting' => 'slug_register' ],
         'umpire-home'              => [ 'title' => 'Home',                    'shortcode' => '[umpire_home]',             'setting' => 'slug_home' ],
     ];
@@ -300,6 +301,7 @@ function us_wizard_render( $step ) {
                     'Tournament Management'  => '[tournament_management]',
                     'Umpire History'         => '[allocator_umpire_history]',
                     'Broadcast Message'      => '[allocator_broadcast]',
+                    'Invoices'               => '[allocator_invoices]',
                     'Create Account'         => '[umpire_register]',
                     'Home'                   => '[umpire_home]',
                 ];
