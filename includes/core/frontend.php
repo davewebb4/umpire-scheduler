@@ -374,7 +374,9 @@ function us_inject_dashboard_chrome( $content ) {
             <?php else : ?>
                 <span class="us-topbar-logo-placeholder"><?php echo esc_html( us_setting( 'org_short' ) ); ?></span>
             <?php endif; ?>
-            <span class="us-topbar-title"><?php echo esc_html( us_setting( 'app_title' ) ); ?></span>
+            <?php if ( ! $logo_url ) : ?>
+                <span class="us-topbar-title"><?php echo esc_html( us_setting( 'app_title' ) ); ?></span>
+            <?php endif; ?>
         </a>
         <div class="us-topbar-right">
             <?php if ( is_user_logged_in() ) : ?>

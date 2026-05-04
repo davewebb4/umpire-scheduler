@@ -65,7 +65,8 @@ body.us-page {
 }
 
 .us-topbar-logo {
-    height: 44px;
+    height: 54px;
+    max-width: 180px;
     width: auto;
     display: block;
     object-fit: contain;
