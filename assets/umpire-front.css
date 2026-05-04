@@ -78,6 +78,12 @@ body.us-page {
     font-weight: 600;
     letter-spacing: .02em;
 }
+.us-topbar-title--sm {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--us-text-muted);
+    letter-spacing: .02em;
+}
 
 .us-topbar-right {
     display: flex;
