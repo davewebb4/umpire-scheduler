@@ -1,6 +1,24 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// ── Page template registration ────────────────────────────────
+// Registers "Umpire App Page" as a selectable template and serves it
+// from the plugin directory so it works with any active theme.
+add_filter( 'theme_page_templates', function( $templates ) {
+    $templates['umpire-app-page'] = __( 'Umpire App Page', 'umpire-scheduler' );
+    return $templates;
+} );
+
+add_filter( 'template_include', function( $template ) {
+    if ( is_singular( 'page' ) && get_post_meta( get_the_ID(), '_wp_page_template', true ) === 'umpire-app-page' ) {
+        $plugin_tpl = US_PATH . 'templates/umpire-app-page.php';
+        if ( file_exists( $plugin_tpl ) ) {
+            return $plugin_tpl;
+        }
+    }
+    return $template;
+} );
+
 // ── Umpire page detection ─────────────────────────────────────
 function us_is_umpire_page() {
     $slugs = array_filter( [
