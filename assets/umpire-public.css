@@ -18,6 +18,7 @@
 .us-home__logo { max-width: 220px; max-height: 110px; width: auto; height: auto; margin: 0 auto 28px; display: block; object-fit: contain; }
 .us-home__logo--large { max-width: 320px; max-height: 160px; }
 .us-home__title { font-size: 36px; font-weight: 800; color: var(--us-primary); margin: 0 0 12px; letter-spacing: -.01em; }
+.us-home__title--sub { font-size: 16px; font-weight: 600; color: var(--us-text-muted); margin: -12px 0 16px; }
 .us-home__tagline { font-size: 17px; color: var(--us-text-muted); margin: 0 0 32px; line-height: 1.5; }
 .us-home__hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .us-home__hero-btn { padding: 13px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-block; transition: opacity .15s; }
