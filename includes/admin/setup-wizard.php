@@ -56,6 +56,7 @@ function us_wizard_handle_post( $step ) {
         $settings['tagline']        = sanitize_text_field( $_POST['tagline']        ?? '' );
         $settings['primary_color']  = sanitize_hex_color(  $_POST['primary_color']  ?? '#091b33' );
         $settings['secondary_color']= sanitize_hex_color(  $_POST['secondary_color']?? '#598cb9' );
+        $settings['logo_id']        = absint( $_POST['logo_id'] ?? 0 );
         update_option( 'us_settings', $settings );
         return 2;
     }
@@ -228,6 +229,51 @@ function us_wizard_render( $step ) {
                     <label>Tagline <span style="font-weight:400;color:#aaa">(optional)</span></label>
                     <input type="text" name="tagline" value="<?php echo esc_attr( $settings['tagline'] ?? '' ); ?>" placeholder="e.g. Professional umpire services for your league">
                     <p class="desc">Shown on the home page under the organisation name.</p>
+                </div>
+                <div class="wiz-field">
+                    <label>Logo <span style="font-weight:400;color:#aaa">(optional)</span></label>
+                    <?php
+                    $wiz_logo_id  = (int) ( $settings['logo_id'] ?? 0 );
+                    $wiz_logo_url = $wiz_logo_id ? wp_get_attachment_image_url( $wiz_logo_id, 'medium' ) : '';
+                    ?>
+                    <input type="hidden" name="logo_id" id="wiz-logo-id" value="<?php echo esc_attr( $wiz_logo_id ); ?>">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;">
+                        <div id="wiz-logo-preview" style="<?php echo $wiz_logo_url ? '' : 'display:none;'; ?>">
+                            <img id="wiz-logo-img" src="<?php echo esc_url( $wiz_logo_url ); ?>"
+                                 style="max-height:60px;max-width:180px;border:1px solid #dde3ea;border-radius:4px;padding:4px;">
+                        </div>
+                        <div>
+                            <button type="button" id="wiz-logo-btn" class="button"><?php echo $wiz_logo_url ? 'Change logo' : 'Upload logo'; ?></button>
+                            <button type="button" id="wiz-logo-remove" class="button" style="margin-left:6px;<?php echo $wiz_logo_url ? '' : 'display:none;'; ?>">Remove</button>
+                        </div>
+                    </div>
+                    <p class="desc">Shown on login, registration, and invoice pages. You can skip this and add it later.</p>
+                    <script>
+                    jQuery(function($){
+                        var frame;
+                        $('#wiz-logo-btn').on('click', function(e){
+                            e.preventDefault();
+                            if ( frame ) { frame.open(); return; }
+                            frame = wp.media({ title: 'Select logo', button: { text: 'Use this image' }, multiple: false, library: { type: 'image' } });
+                            frame.on('select', function(){
+                                var att = frame.state().get('selection').first().toJSON();
+                                $('#wiz-logo-id').val(att.id);
+                                var src = att.sizes && att.sizes.medium ? att.sizes.medium.url : att.url;
+                                $('#wiz-logo-img').attr('src', src);
+                                $('#wiz-logo-preview').show();
+                                $('#wiz-logo-remove').show();
+                                $('#wiz-logo-btn').text('Change logo');
+                            });
+                            frame.open();
+                        });
+                        $('#wiz-logo-remove').on('click', function(){
+                            $('#wiz-logo-id').val('0');
+                            $('#wiz-logo-preview').hide();
+                            $(this).hide();
+                            $('#wiz-logo-btn').text('Upload logo');
+                        });
+                    });
+                    </script>
                 </div>
                 <div style="display:flex;gap:16px;">
                     <div class="wiz-field" style="flex:1">

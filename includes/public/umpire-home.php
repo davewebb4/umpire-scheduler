@@ -5,8 +5,7 @@ add_shortcode( 'umpire_home', 'us_shortcode_umpire_home' );
 function us_shortcode_umpire_home() {
     $org_name  = us_setting( 'org_name' )  ?: us_setting( 'app_title' );
     $tagline   = us_setting( 'tagline' );
-    $logo_id   = get_theme_mod( 'custom_logo' );
-    $logo_url  = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+    $logo_url  = us_get_logo_url( 'medium' );
 
     $leagues   = us_get_active_leagues( false );
     $tourneys  = us_get_active_leagues( true );

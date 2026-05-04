@@ -407,8 +407,7 @@ function us_shortcode_allocator_invoices() {
                 $period = date( 'F Y', strtotime( $month . '-01' ) );
             }
 
-            $logo_id  = get_theme_mod( 'custom_logo' );
-            $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+            $logo_url = us_get_logo_url( 'medium' );
         ?>
         <!-- ── Step 3: Invoice preview ────────────────────── -->
         <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">

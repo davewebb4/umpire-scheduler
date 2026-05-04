@@ -274,9 +274,7 @@ function us_inject_dashboard_chrome( $content ) {
         ? $umpire->post_title
         : ( is_user_logged_in() ? wp_get_current_user()->display_name : 'Guest' );
 
-    // ── Logo from Customizer ──────────────────────────────────
-    $logo_id  = get_theme_mod( 'custom_logo' );
-    $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+    $logo_url = us_get_logo_url( 'medium' );
 
     // ── Public items — always visible ─────────────────────────
     $public_items   = [];

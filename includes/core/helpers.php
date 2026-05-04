@@ -1,6 +1,19 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// ── Logo helper ───────────────────────────────────────────────
+// Reads the plugin's own logo setting first; falls back to the
+// WordPress custom_logo theme mod so existing setups keep working.
+function us_get_logo_url( $size = 'medium' ) {
+    $id = (int) us_setting( 'logo_id' );
+    if ( $id ) {
+        $url = wp_get_attachment_image_url( $id, $size );
+        if ( $url ) return $url;
+    }
+    $theme_id = get_theme_mod( 'custom_logo' );
+    return $theme_id ? ( wp_get_attachment_image_url( $theme_id, $size ) ?: '' ) : '';
+}
+
 // ── Assignment helpers ────────────────────────────────────────
 
 // Get any assignment for a game + position (any status)

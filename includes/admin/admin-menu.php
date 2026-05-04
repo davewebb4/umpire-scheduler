@@ -203,8 +203,15 @@ function us_admin_scripts( $hook ) {
         strpos( $hook, 'umpire-scheduler' ) !== false ||
         strpos( $hook, 'us-league-games-' ) !== false ||
         strpos( $hook, 'us-requests'      ) !== false ||
-        strpos( $hook, 'us-pay-reports'   ) !== false
+        strpos( $hook, 'us-pay-reports'   ) !== false ||
+        strpos( $hook, 'us-settings'      ) !== false ||
+        strpos( $hook, 'us-setup-wizard'  ) !== false
     );
+
+    // Media uploader needed on settings and wizard pages for logo upload
+    if ( strpos( $hook, 'us-settings' ) !== false || strpos( $hook, 'us-setup-wizard' ) !== false ) {
+        wp_enqueue_media();
+    }
 
     $is_cpt_screen = $screen && in_array( $screen->post_type, [
         US_PT_GAME,

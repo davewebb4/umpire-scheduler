@@ -898,8 +898,7 @@ function us_shortcode_allocator_pay_reports() {
     <div id="us-invoice-render" style="display:none;width:780px;background:#fff;padding:48px 52px;font-family:Arial,sans-serif;color:#333;font-size:13px;line-height:1.5;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:3px solid #1a3a5c;margin-bottom:28px;">
             <?php
-            $logo_id  = get_theme_mod( 'custom_logo' );
-            $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+            $logo_url = us_get_logo_url( 'medium' );
             $org_name = us_setting( 'org_name' ) ?: us_setting( 'org_short' );
             ?>
             <?php if ( $logo_url ) : ?>
