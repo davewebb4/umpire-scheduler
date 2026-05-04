@@ -21,9 +21,10 @@ function us_shortcode_umpire_home() {
                 <?php if ( $logo_url ) : ?>
                     <img src="<?php echo esc_url( $logo_url ); ?>"
                          alt="<?php echo esc_attr( $org_name ); ?>"
-                         class="us-home__logo">
+                         class="us-home__logo us-home__logo--large">
+                <?php else : ?>
+                    <h1 class="us-home__title"><?php echo esc_html( $org_name ); ?></h1>
                 <?php endif; ?>
-                <h1 class="us-home__title"><?php echo esc_html( $org_name ); ?></h1>
                 <?php if ( $tagline ) : ?>
                     <p class="us-home__tagline"><?php echo esc_html( $tagline ); ?></p>
                 <?php endif; ?>
