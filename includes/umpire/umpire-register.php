@@ -38,8 +38,7 @@ function us_shortcode_umpire_register() {
     <div class="us-login-wrap">
         <div class="us-login-card us-login-card--register">
             <?php
-            $logo_id  = get_theme_mod( 'custom_logo' );
-            $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+            $logo_url = us_get_logo_url( 'medium' );
             ?>
             <div class="us-login-logo">
                 <?php if ( $logo_url ) : ?>

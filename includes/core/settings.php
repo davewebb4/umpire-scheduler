@@ -84,6 +84,53 @@ function us_settings_page() {
             <h2 class="title">Branding</h2>
             <table class="form-table">
                 <tr>
+                    <th><label>Logo</label></th>
+                    <td>
+                        <?php
+                        $logo_id  = (int) ( $s['logo_id'] ?? 0 );
+                        $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+                        ?>
+                        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+                            <div id="us-logo-preview" style="<?php echo $logo_url ? '' : 'display:none;'; ?>">
+                                <img id="us-logo-img" src="<?php echo esc_url( $logo_url ); ?>"
+                                     style="max-height:80px;max-width:200px;border:1px solid #ddd;border-radius:4px;padding:4px;">
+                            </div>
+                            <div>
+                                <input type="hidden" name="us_logo_id" id="us-logo-id-input" value="<?php echo esc_attr( $logo_id ); ?>">
+                                <button type="button" id="us-logo-upload-btn" class="button"><?php echo $logo_url ? 'Change logo' : 'Upload logo'; ?></button>
+                                <?php if ( $logo_url ) : ?>
+                                    <button type="button" id="us-logo-remove-btn" class="button" style="margin-left:6px;">Remove</button>
+                                <?php endif; ?>
+                                <p class="description">Displayed on login, registration and invoice pages.</p>
+                            </div>
+                        </div>
+                        <script>
+                        jQuery(function($){
+                            var frame;
+                            $('#us-logo-upload-btn').on('click', function(e){
+                                e.preventDefault();
+                                if ( frame ) { frame.open(); return; }
+                                frame = wp.media({ title: 'Select logo', button: { text: 'Use this image' }, multiple: false, library: { type: 'image' } });
+                                frame.on('select', function(){
+                                    var att = frame.state().get('selection').first().toJSON();
+                                    $('#us-logo-id-input').val(att.id);
+                                    var src = att.sizes && att.sizes.medium ? att.sizes.medium.url : att.url;
+                                    $('#us-logo-img').attr('src', src);
+                                    $('#us-logo-preview').show();
+                                    $('#us-logo-upload-btn').text('Change logo');
+                                });
+                                frame.open();
+                            });
+                            $('#us-logo-remove-btn').on('click', function(){
+                                $('#us-logo-id-input').val('0');
+                                $('#us-logo-preview').hide();
+                                $('#us-logo-upload-btn').text('Upload logo');
+                            });
+                        });
+                        </script>
+                    </td>
+                </tr>
+                <tr>
                     <th><label for="us_tagline">Tagline</label></th>
                     <td>
                         <input type="text" id="us_tagline" name="us_tagline"
@@ -458,6 +505,7 @@ function us_save_settings() {
         'primary_color'                   => 'sanitize_hex_color',
         'secondary_color'                 => 'sanitize_hex_color',
         'email_footer'                    => 'sanitize_text_field',
+        'logo_id'                         => 'absint',
     ];
 
     $settings = [];
@@ -515,6 +563,7 @@ function us_get_settings() {
         'primary_color'                   => '#091b33',
         'secondary_color'                 => '#598cb9',
         'email_footer'                    => 'Umpire Scheduler',
+        'logo_id'                         => 0,
     ];
 
     $saved  = get_option( 'us_settings', [] );
