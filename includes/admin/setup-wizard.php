@@ -2,7 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ── On activation, set redirect flag ─────────────────────────
-register_activation_hook( US_PATH . '../umpire-scheduler.php', 'us_wizard_activation' );
+// Called directly from us_activate() in the main plugin file
 function us_wizard_activation() {
     if ( ! get_option( 'us_settings' ) ) {
         set_transient( 'us_wizard_redirect', '1', 30 );

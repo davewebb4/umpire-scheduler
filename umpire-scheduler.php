@@ -80,6 +80,9 @@ function us_activate() {
     // Mark wizard complete on existing installs so it never shows
     if ( get_option( 'us_settings' ) ) {
         update_option( 'us_wizard_complete', '1' );
+    } else {
+        // Fresh install — trigger wizard redirect
+        us_wizard_activation();
     }
 }
 
