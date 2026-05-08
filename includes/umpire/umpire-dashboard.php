@@ -249,47 +249,6 @@ function us_shortcode_dashboard() {
         </p>
         <?php endif; ?>
 
-        <?php
-        // ── League rules ──────────────────────────────────────
-        $rule_leagues = get_posts( [
-            'post_type'   => US_PT_LEAGUE,
-            'numberposts' => -1,
-            'orderby'     => 'title',
-            'order'       => 'ASC',
-            'post_status' => 'publish',
-        ] );
-        $rule_leagues = array_filter( $rule_leagues, function( $l ) {
-            return trim( get_post_meta( $l->ID, 'us_rules', true ) ) !== '';
-        } );
-        ?>
-        <?php if ( ! empty( $rule_leagues ) ) : ?>
-        <h3>League Rules</h3>
-        <div class="us-rules-list">
-            <?php foreach ( $rule_leagues as $rl ) :
-                $rules       = get_post_meta( $rl->ID, 'us_rules', true );
-                $is_tourney  = get_post_meta( $rl->ID, 'us_is_tournament', true ) === '1';
-                $panel_id    = 'us-rules-' . $rl->ID;
-            ?>
-            <div class="us-rules-panel">
-                <button type="button" class="us-rules-panel__toggle" aria-expanded="false" aria-controls="<?php echo $panel_id; ?>">
-                    <span class="us-rules-panel__name">
-                        <?php echo esc_html( $rl->post_title ); ?>
-                        <?php if ( $is_tourney ) : ?>
-                            <span class="us-badge us-badge--secondary" style="font-size:10px;vertical-align:middle;margin-left:6px;">Tournament</span>
-                        <?php endif; ?>
-                    </span>
-                    <span class="us-rules-panel__chevron">&#8250;</span>
-                </button>
-                <div class="us-rules-panel__body" id="<?php echo $panel_id; ?>" hidden>
-                    <div class="us-rules-panel__content">
-                        <?php echo wp_kses_post( $rules ); ?>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
-
         <h3>My profile</h3>
 
         <div class="us-profile-grid">
