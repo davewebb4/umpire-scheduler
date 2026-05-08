@@ -36,6 +36,7 @@ function us_is_umpire_page() {
         us_setting( 'slug_allocator_past_games' ),
         us_setting( 'slug_allocator_tournament_games' ),
         us_setting( 'slug_allocator_umpire_history' ),
+        us_setting( 'slug_league_rules' ),
         us_setting( 'slug_allocator_broadcast' ),
         us_setting( 'slug_allocator_invoices' ),
         us_setting( 'slug_register' ),

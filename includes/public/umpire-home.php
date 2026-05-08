@@ -100,42 +100,24 @@ function us_shortcode_umpire_home() {
 
         <!-- ── League Rules ──────────────────────────────────── -->
         <?php
-        $all_leagues_with_rules = get_posts( [
-            'post_type'   => US_PT_LEAGUE,
-            'numberposts' => -1,
-            'orderby'     => 'title',
-            'order'       => 'ASC',
-            'post_status' => 'publish',
-        ] );
-        $rule_leagues = array_filter( $all_leagues_with_rules, function( $l ) {
-            return trim( get_post_meta( $l->ID, 'us_rules', true ) ) !== '';
-        } );
+        $rule_leagues = array_filter(
+            get_posts( [ 'post_type' => US_PT_LEAGUE, 'numberposts' => -1, 'orderby' => 'title', 'order' => 'ASC', 'post_status' => 'publish' ] ),
+            fn( $l ) => trim( get_post_meta( $l->ID, 'us_rules', true ) ) !== ''
+        );
+        $rules_base = home_url( '/' . us_setting( 'slug_league_rules' ) . '/' );
         ?>
         <?php if ( ! empty( $rule_leagues ) ) : ?>
         <section class="us-home__section">
             <h2 class="us-home__section-title">League Rules</h2>
-            <div class="us-rules-list">
+            <div class="us-home__leagues">
                 <?php foreach ( $rule_leagues as $rl ) :
-                    $rules      = get_post_meta( $rl->ID, 'us_rules', true );
                     $is_tourney = get_post_meta( $rl->ID, 'us_is_tournament', true ) === '1';
-                    $panel_id   = 'us-home-rules-' . $rl->ID;
                 ?>
-                <div class="us-rules-panel">
-                    <button type="button" class="us-rules-panel__toggle" aria-expanded="false" aria-controls="<?php echo $panel_id; ?>">
-                        <span class="us-rules-panel__name">
-                            <?php echo esc_html( $rl->post_title ); ?>
-                            <?php if ( $is_tourney ) : ?>
-                                <span class="us-badge us-badge--secondary" style="font-size:10px;vertical-align:middle;margin-left:6px;">Tournament</span>
-                            <?php endif; ?>
-                        </span>
-                        <span class="us-rules-panel__chevron">&#8250;</span>
-                    </button>
-                    <div class="us-rules-panel__body" id="<?php echo $panel_id; ?>" hidden>
-                        <div class="us-rules-panel__content">
-                            <?php echo wp_kses_post( $rules ); ?>
-                        </div>
-                    </div>
-                </div>
+                <a href="<?php echo esc_url( add_query_arg( 'league_id', $rl->ID, $rules_base ) ); ?>"
+                   class="us-home__league-card<?php echo $is_tourney ? ' us-home__league-card--tourney' : ''; ?>">
+                    <span class="us-home__league-name"><?php echo esc_html( $rl->post_title ); ?></span>
+                    <span class="us-home__league-meta">View rules &rarr;</span>
+                </a>
                 <?php endforeach; ?>
             </div>
         </section>
