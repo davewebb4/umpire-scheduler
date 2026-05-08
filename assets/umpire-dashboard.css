@@ -113,6 +113,59 @@
     margin-bottom: 4px;
 }
 
+/* ── League rules accordion ────────────────────────────────── */
+.us-rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 32px;
+}
+.us-rules-panel {
+    border: 1px solid #dde3ea;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+.us-rules-panel__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--us-primary, #091b33);
+    gap: 12px;
+}
+.us-rules-panel__toggle:hover { background: #f5f8fb; }
+.us-rules-panel__chevron {
+    font-size: 20px;
+    font-weight: 400;
+    color: #aaa;
+    transition: transform .2s;
+    flex-shrink: 0;
+}
+.us-rules-panel__toggle[aria-expanded="true"] .us-rules-panel__chevron {
+    transform: rotate(90deg);
+}
+.us-rules-panel__body { border-top: 1px solid #eef0f3; }
+.us-rules-panel__content {
+    padding: 16px 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #444;
+}
+.us-rules-panel__content h1,
+.us-rules-panel__content h2,
+.us-rules-panel__content h3 { font-size: 15px; font-weight: 700; margin: 14px 0 6px; color: var(--us-primary, #091b33); }
+.us-rules-panel__content ul,
+.us-rules-panel__content ol { padding-left: 20px; margin: 8px 0; }
+.us-rules-panel__content p { margin: 0 0 8px; }
+
 /* ── Profile grid ──────────────────────────────────────────── */
 .us-profile-grid {
     display: grid;
