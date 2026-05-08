@@ -70,6 +70,7 @@ require_once US_PATH . 'includes/public/umpire-home.php';
 require_once US_PATH . 'includes/public/league-schedule.php';
 require_once US_PATH . 'includes/public/tournament-schedule.php';
 require_once US_PATH . 'includes/public/umpire-list.php';
+require_once US_PATH . 'includes/public/league-rules.php';
 
 // ── Activation / deactivation ─────────────────────────────────
 register_activation_hook( __FILE__, 'us_activate' );
