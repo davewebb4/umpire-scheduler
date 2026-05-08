@@ -82,6 +82,18 @@
     });
 })();
 
+// ── League rules accordion ────────────────────────────────────
+(function () {
+    document.querySelectorAll('.us-rules-panel__toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            var body     = document.getElementById(btn.getAttribute('aria-controls'));
+            btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            if ( body ) body.hidden = expanded;
+        });
+    });
+})();
+
 // ── Umpire list contact toggle ────────────────────────────────
 (function () {
     document.querySelectorAll('.us-contact-toggle').forEach(function (btn) {
