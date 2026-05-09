@@ -23,14 +23,16 @@ function us_league_meta_cb( $post ) {
 
     // ── Inline re-apply notices ───────────────────────────────
     foreach ( [
-        'us_pay_reapply_std_notice_' . $post->ID => [ 'rate' => $rate,    'label' => 'standard' ],
-        'us_pay_reapply_dh_notice_'  . $post->ID => [ 'rate' => $dh_rate, 'label' => 'optional rate' ],
+        'us_pay_reapply_std_notice_'      . $post->ID => [ 'rate' => $rate,    'label' => 'standard',     'scope' => 'upcoming' ],
+        'us_pay_reapply_std_past_notice_' . $post->ID => [ 'rate' => $rate,    'label' => 'standard',     'scope' => 'past' ],
+        'us_pay_reapply_dh_notice_'       . $post->ID => [ 'rate' => $dh_rate, 'label' => 'optional rate', 'scope' => 'upcoming' ],
+        'us_pay_reapply_dh_past_notice_'  . $post->ID => [ 'rate' => $dh_rate, 'label' => 'optional rate', 'scope' => 'past' ],
     ] as $key => $info ) {
         $count = get_transient( $key );
         if ( $count !== false ) {
             delete_transient( $key );
             echo '<div class="notice notice-success inline us-admin-meta__inline-notice"><p>';
-            echo '<strong>' . intval( $count ) . ' ' . $info['label'] . ' assignment(s) (including past games) updated to $' . number_format( floatval( $info['rate'] ), 2 ) . ' per game.</strong>';
+            echo '<strong>' . intval( $count ) . ' ' . $info['scope'] . ' ' . $info['label'] . ' assignment(s) updated to $' . number_format( floatval( $info['rate'] ), 2 ) . ' per game.</strong>';
             echo '</p></div>';
         }
     }
@@ -182,27 +184,38 @@ function us_league_meta_cb( $post ) {
             <td class="us-admin-meta__reapply-col">
 
                 <?php if ( $rate ) : ?>
-                <div>
-                    <button type="submit" name="us_reapply_std_rate" value="1" class="button">
-                        Re-apply $<?php echo number_format( floatval( $rate ), 2 ); ?> to all upcoming
-                        <?php echo $is_tournament ? 'tournament' : 'standard'; ?> games
-                    </button>
+                <div style="margin-bottom:10px">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+                        <button type="submit" name="us_reapply_std_rate_past" value="1" class="button">
+                            Re-apply $<?php echo number_format( floatval( $rate ), 2 ); ?> to past
+                            <?php echo $is_tournament ? 'tournament' : 'standard'; ?> games
+                        </button>
+                        <button type="submit" name="us_reapply_std_rate_upcoming" value="1" class="button">
+                            Re-apply $<?php echo number_format( floatval( $rate ), 2 ); ?> to upcoming
+                            <?php echo $is_tournament ? 'tournament' : 'standard'; ?> games
+                        </button>
+                    </div>
                     <p class="description us-admin-meta__reapply-desc">
                         <?php echo $is_tournament
-                            ? 'Updates all assignments for this tournament regardless of status.'
-                            : 'Updates all upcoming assignments on standard-rate games regardless of status.';
+                            ? 'Updates all assignments for this tournament — past or upcoming independently.'
+                            : 'Updates standard-rate game assignments — past or upcoming independently.';
                         ?>
                     </p>
                 </div>
                 <?php endif; ?>
 
                 <?php if ( $dh_rate && ! $is_tournament ) : ?>
-                <div class="us-dh-field">
-                    <button type="submit" name="us_reapply_dh_rate" value="1" class="button">
-                        Re-apply $<?php echo number_format( floatval( $dh_rate ), 2 ); ?> to all upcoming optional-rate games
-                    </button>
+                <div class="us-dh-field" style="margin-bottom:10px">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+                        <button type="submit" name="us_reapply_dh_rate_past" value="1" class="button">
+                            Re-apply $<?php echo number_format( floatval( $dh_rate ), 2 ); ?> to past optional-rate games
+                        </button>
+                        <button type="submit" name="us_reapply_dh_rate_upcoming" value="1" class="button">
+                            Re-apply $<?php echo number_format( floatval( $dh_rate ), 2 ); ?> to upcoming optional-rate games
+                        </button>
+                    </div>
                     <p class="description us-admin-meta__reapply-desc">
-                        Updates all upcoming assignments on optional-rate games only regardless of status.
+                        Updates optional-rate game assignments — past or upcoming independently.
                     </p>
                 </div>
                 <?php endif; ?>
@@ -276,47 +289,85 @@ function us_maybe_update_pay_rates( $post_id ) {
     $today         = current_time( 'Y-m-d' );
     $is_tournament = isset( $_POST['us_is_tournament'] );
 
+    $yesterday = date( 'Y-m-d', strtotime( '-1 day', strtotime( $today ) ) );
+
     // ── Standard rate ─────────────────────────────────────────
-    $new_std     = sanitize_text_field( $_POST['us_pay_rate']          ?? '' );
-    $prev_std    = sanitize_text_field( $_POST['us_pay_rate_previous'] ?? '' );
-    $reapply_std = isset( $_POST['us_reapply_std_rate'] );
+    $new_std              = sanitize_text_field( $_POST['us_pay_rate']                  ?? '' );
+    $prev_std             = sanitize_text_field( $_POST['us_pay_rate_previous']         ?? '' );
+    $reapply_std_past     = isset( $_POST['us_reapply_std_rate_past'] );
+    $reapply_std_upcoming = isset( $_POST['us_reapply_std_rate_upcoming'] );
+    $reapply_std          = $reapply_std_past || $reapply_std_upcoming;
 
     if ( $new_std && ( $reapply_std || $new_std !== $prev_std ) ) {
-        $from  = $reapply_std ? null : $today;
+        if ( $reapply_std_past ) {
+            $from = null;
+            $to   = $yesterday;
+        } elseif ( $reapply_std_upcoming ) {
+            $from = $today;
+            $to   = null;
+        } else {
+            // Auto-update on rate change — upcoming only
+            $from = $today;
+            $to   = null;
+        }
         $count = $is_tournament
-            ? us_apply_rate_to_upcoming( $post_id, $new_std, $from, null )
-            : us_apply_rate_to_upcoming( $post_id, $new_std, $from, false );
+            ? us_apply_rate_to_upcoming( $post_id, $new_std, $from, null,  $to )
+            : us_apply_rate_to_upcoming( $post_id, $new_std, $from, false, $to );
         if ( $count > 0 ) {
-            $key = $reapply_std ? 'us_pay_reapply_std_notice_' : 'us_pay_auto_std_notice_';
-            set_transient( $key . $post_id, $count, 30 );
+            if ( $reapply_std_past ) {
+                set_transient( 'us_pay_reapply_std_past_notice_'     . $post_id, $count, 30 );
+            } elseif ( $reapply_std_upcoming ) {
+                set_transient( 'us_pay_reapply_std_notice_'          . $post_id, $count, 30 );
+            } else {
+                set_transient( 'us_pay_auto_std_notice_'             . $post_id, $count, 30 );
+            }
         }
     }
 
     // ── Double header rate — skip for tournaments ─────────────
     if ( ! $is_tournament ) {
-        $new_dh     = sanitize_text_field( $_POST['us_dh_pay_rate']          ?? '' );
-        $prev_dh    = sanitize_text_field( $_POST['us_dh_pay_rate_previous'] ?? '' );
-        $reapply_dh = isset( $_POST['us_reapply_dh_rate'] );
+        $new_dh              = sanitize_text_field( $_POST['us_dh_pay_rate']                 ?? '' );
+        $prev_dh             = sanitize_text_field( $_POST['us_dh_pay_rate_previous']        ?? '' );
+        $reapply_dh_past     = isset( $_POST['us_reapply_dh_rate_past'] );
+        $reapply_dh_upcoming = isset( $_POST['us_reapply_dh_rate_upcoming'] );
+        $reapply_dh          = $reapply_dh_past || $reapply_dh_upcoming;
 
         if ( $new_dh && ( $reapply_dh || $new_dh !== $prev_dh ) ) {
-            $from  = $reapply_dh ? null : $today;
-            $count = us_apply_rate_to_upcoming( $post_id, $new_dh, $from, true );
+            if ( $reapply_dh_past ) {
+                $from = null;
+                $to   = $yesterday;
+            } elseif ( $reapply_dh_upcoming ) {
+                $from = $today;
+                $to   = null;
+            } else {
+                $from = $today;
+                $to   = null;
+            }
+            $count = us_apply_rate_to_upcoming( $post_id, $new_dh, $from, true, $to );
             if ( $count > 0 ) {
-                $key = $reapply_dh ? 'us_pay_reapply_dh_notice_' : 'us_pay_auto_dh_notice_';
-                set_transient( $key . $post_id, $count, 30 );
+                if ( $reapply_dh_past ) {
+                    set_transient( 'us_pay_reapply_dh_past_notice_'  . $post_id, $count, 30 );
+                } elseif ( $reapply_dh_upcoming ) {
+                    set_transient( 'us_pay_reapply_dh_notice_'       . $post_id, $count, 30 );
+                } else {
+                    set_transient( 'us_pay_auto_dh_notice_'          . $post_id, $count, 30 );
+                }
             }
         }
     }
 }
 
 // ── Shared helper: apply rate to assignments ──────────────────
-// Pass null for $from_date to include past games.
-function us_apply_rate_to_upcoming( $league_id, $rate, $from_date = null, $dh_only = false ) {
+// $from_date / $to_date: null means no bound on that end.
+function us_apply_rate_to_upcoming( $league_id, $rate, $from_date = null, $dh_only = false, $to_date = null ) {
     $meta_query = [
         [ 'key' => 'us_league_id', 'value' => $league_id, 'compare' => '=' ],
     ];
     if ( $from_date !== null ) {
         $meta_query[] = [ 'key' => 'us_game_date', 'value' => $from_date, 'compare' => '>=' ];
+    }
+    if ( $to_date !== null ) {
+        $meta_query[] = [ 'key' => 'us_game_date', 'value' => $to_date, 'compare' => '<=' ];
     }
 
     if ( $dh_only === true ) {
