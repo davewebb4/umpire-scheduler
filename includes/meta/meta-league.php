@@ -30,7 +30,7 @@ function us_league_meta_cb( $post ) {
         if ( $count !== false ) {
             delete_transient( $key );
             echo '<div class="notice notice-success inline us-admin-meta__inline-notice"><p>';
-            echo '<strong>' . intval( $count ) . ' upcoming ' . $info['label'] . ' assignment(s) updated to $' . number_format( floatval( $info['rate'] ), 2 ) . ' per game.</strong>';
+            echo '<strong>' . intval( $count ) . ' ' . $info['label'] . ' assignment(s) (including past games) updated to $' . number_format( floatval( $info['rate'] ), 2 ) . ' per game.</strong>';
             echo '</p></div>';
         }
     }
@@ -282,9 +282,10 @@ function us_maybe_update_pay_rates( $post_id ) {
     $reapply_std = isset( $_POST['us_reapply_std_rate'] );
 
     if ( $new_std && ( $reapply_std || $new_std !== $prev_std ) ) {
+        $from  = $reapply_std ? null : $today;
         $count = $is_tournament
-            ? us_apply_rate_to_upcoming( $post_id, $new_std, $today, null )
-            : us_apply_rate_to_upcoming( $post_id, $new_std, $today, false );
+            ? us_apply_rate_to_upcoming( $post_id, $new_std, $from, null )
+            : us_apply_rate_to_upcoming( $post_id, $new_std, $from, false );
         if ( $count > 0 ) {
             $key = $reapply_std ? 'us_pay_reapply_std_notice_' : 'us_pay_auto_std_notice_';
             set_transient( $key . $post_id, $count, 30 );
@@ -298,7 +299,8 @@ function us_maybe_update_pay_rates( $post_id ) {
         $reapply_dh = isset( $_POST['us_reapply_dh_rate'] );
 
         if ( $new_dh && ( $reapply_dh || $new_dh !== $prev_dh ) ) {
-            $count = us_apply_rate_to_upcoming( $post_id, $new_dh, $today, true );
+            $from  = $reapply_dh ? null : $today;
+            $count = us_apply_rate_to_upcoming( $post_id, $new_dh, $from, true );
             if ( $count > 0 ) {
                 $key = $reapply_dh ? 'us_pay_reapply_dh_notice_' : 'us_pay_auto_dh_notice_';
                 set_transient( $key . $post_id, $count, 30 );
@@ -307,12 +309,15 @@ function us_maybe_update_pay_rates( $post_id ) {
     }
 }
 
-// ── Shared helper: apply rate to upcoming assignments ─────────
-function us_apply_rate_to_upcoming( $league_id, $rate, $from_date, $dh_only = false ) {
+// ── Shared helper: apply rate to assignments ──────────────────
+// Pass null for $from_date to include past games.
+function us_apply_rate_to_upcoming( $league_id, $rate, $from_date = null, $dh_only = false ) {
     $meta_query = [
-        [ 'key' => 'us_league_id', 'value' => $league_id, 'compare' => '='  ],
-        [ 'key' => 'us_game_date', 'value' => $from_date,  'compare' => '>=' ],
+        [ 'key' => 'us_league_id', 'value' => $league_id, 'compare' => '=' ],
     ];
+    if ( $from_date !== null ) {
+        $meta_query[] = [ 'key' => 'us_game_date', 'value' => $from_date, 'compare' => '>=' ];
+    }
 
     if ( $dh_only === true ) {
         $meta_query[] = [ 'key' => 'us_double_header', 'value' => '1', 'compare' => '=' ];
