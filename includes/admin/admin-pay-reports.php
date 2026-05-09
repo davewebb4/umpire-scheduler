@@ -833,11 +833,11 @@ function us_handle_mark_paid() {
             'post_title'  => $umpire_name . ' — ' . $month,
             'post_status' => 'publish',
         ] );
-        update_post_meta( $post_id, 'us_payment_umpire_id', $umpire_id );
-        update_post_meta( $post_id, 'us_payment_month',     $month );
-        update_post_meta( $post_id, 'us_payment_amount',    $amount );
-        update_post_meta( $post_id, 'us_payment_date',      $date );
-        update_post_meta( $post_id, 'us_payment_league_id', $league_id );
+        update_post_meta( $post_id, 'payment_umpire_id', $umpire_id );
+        update_post_meta( $post_id, 'payment_month',     $month );
+        update_post_meta( $post_id, 'payment_amount',    $amount );
+        update_post_meta( $post_id, 'payment_date',      $date );
+        update_post_meta( $post_id, 'payment_league_id', $league_id );
         us_notify_umpire_paid( $umpire_id, $month, $amount, $date );
     }
 
