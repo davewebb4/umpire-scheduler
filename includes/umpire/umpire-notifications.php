@@ -302,6 +302,24 @@ function us_notify_assignor_new_umpire( $name, $email ) {
     wp_mail( us_get_assignor_email(), 'New umpire registered — ' . $name, us_email_wrap( $body ), us_email_headers() );
 }
 
+// ── Notify umpire: game cancelled, assignment removed ─────────
+function us_notify_umpire_cancelled( $assignment_id ) {
+    $d = us_get_notification_data( $assignment_id );
+    if ( ! $d['email'] ) return;
+
+    $body  = us_email_greeting( $d['umpire'] );
+    $body .= '<p style="font-size:14px;color:#444;margin:12px 0 0;">The following game has been <strong>cancelled</strong>. Your assignment has been removed.</p>';
+    $body .= us_email_game_table( $d, [
+        'Game'     => $d['away'] . ' at ' . $d['home'],
+        'Date'     => $d['date_fmt'],
+        'Time'     => $d['time_fmt'],
+        'League'   => $d['league'],
+        'Position' => $d['position'],
+    ] );
+
+    wp_mail( $d['email'], 'Game cancelled — ' . $d['date_fmt'], us_email_wrap( $body ), us_email_headers() );
+}
+
 // ── Notify all assigned umpires of a game change ──────────────
 function us_notify_game_changed( $game_id, $changes ) {
     $home      = get_post_meta( $game_id, 'us_home_team', true );

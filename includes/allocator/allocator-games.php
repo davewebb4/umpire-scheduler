@@ -207,6 +207,41 @@ function us_ajax_allocator_delete_game() {
     }
 
     wp_delete_post( $game_id, true );
+}
+
+// ── AJAX: Cancel game (keeps record, removes assignments) ─────
+add_action( 'wp_ajax_us_allocator_cancel_game', 'us_ajax_allocator_cancel_game' );
+function us_ajax_allocator_cancel_game() {
+    check_ajax_referer( 'us_assign_nonce', 'nonce' );
+    if ( ! us_is_allocator() ) wp_send_json_error( 'Unauthorized' );
+
+    $game_id = absint( $_POST['game_id'] ?? 0 );
+    if ( ! $game_id ) wp_send_json_error( 'Invalid game' );
+
+    update_post_meta( $game_id, 'us_game_status', 'cancelled' );
+
+    $assignments = get_posts( [
+        'post_type'   => US_PT_ASSIGNMENT,
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'meta_query'  => [
+            [ 'key' => 'us_game_id', 'value' => $game_id, 'compare' => '=' ],
+            [ 'key' => 'us_status',  'value' => [ 'confirmed', 'pending', 'requested' ], 'compare' => 'IN' ],
+        ],
+    ] );
+
+    $notified = 0;
+    foreach ( $assignments as $a ) {
+        us_notify_umpire_cancelled( $a->ID );
+        wp_delete_post( $a->ID, true );
+        $notified++;
+    }
+
+    wp_send_json_success( [
+        'game_id'  => $game_id,
+        'notified' => $notified,
+        'msg'      => 'Game cancelled. ' . $notified . ' umpire(s) notified.',
+    ] );
     wp_send_json_success( [ 'game_id' => $game_id ] );
 }
 
@@ -376,6 +411,8 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             $is_dh_meta   = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
             $g_league_id  = get_post_meta( $game->ID, 'us_league_id',     true );
             $is_postponed = us_is_game_postponed( $game->ID );
+            $is_cancelled = us_is_game_cancelled( $game->ID );
+            $is_locked    = $is_postponed || $is_cancelled;
 
             $plate           = us_get_confirmed_assignment( $game->ID, 'plate' );
             $base            = us_get_confirmed_assignment( $game->ID, 'base' );
@@ -399,7 +436,9 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             ] );
             $pending_uids = array_map( fn( $r ) => get_post_meta( $r->ID, 'us_umpire_id', true ), $all_game_reqs );
 
-            if ( $is_postponed ) {
+            if ( $is_cancelled ) {
+                $status_label = 'Cancelled'; $status_class = 'us-alloc__status--cancelled';
+            } elseif ( $is_postponed ) {
                 $status_label = 'Postponed'; $status_class = 'us-alloc__status--postponed';
             } elseif ( $plate && ( ! $two_umps || $base ) ) {
                 $status_label = 'Confirmed'; $status_class = 'us-status-confirmed';
@@ -432,7 +471,7 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
                     <span class="us-mgmt-card__status <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
                 </div>
                 <div class="us-mgmt-card__header-actions">
-                    <?php if ( ! $is_postponed ) : ?>
+                    <?php if ( ! $is_locked ) : ?>
                     <button type="button"
                             class="us-alloc-game-edit-btn us-alloc__action-btn us-alloc-games__action-btn--edit"
                             data-game="<?php echo $game->ID; ?>"
@@ -452,6 +491,12 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
                             data-label="<?php echo esc_attr( $g_away . ' at ' . $g_home ); ?>">
                         Postpone
                     </button>
+                    <button type="button"
+                            class="us-alloc-game-cancel-btn us-alloc__action-btn us-alloc__action-btn--cancel"
+                            data-game="<?php echo $game->ID; ?>"
+                            data-label="<?php echo esc_attr( $g_away . ' at ' . $g_home ); ?>">
+                        Cancel
+                    </button>
                     <?php endif; ?>
                     <button type="button"
                             class="us-alloc-game-delete-btn us-alloc__action-btn us-alloc-games__action-btn--delete"
@@ -465,12 +510,12 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             <div class="us-mgmt-card__umpires">
                 <div class="us-mgmt-card__slot">
                     <span class="us-mgmt-card__slot-label">Plate</span>
-                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $plate_conflict ); ?>
+                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_locked, $plate_conflict ); ?>
                 </div>
                 <?php if ( $two_umps ) : ?>
                 <div class="us-mgmt-card__slot">
                     <span class="us-mgmt-card__slot-label">Base</span>
-                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $base_conflict ); ?>
+                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_locked, $base_conflict ); ?>
                 </div>
                 <?php endif; ?>
             </div>
@@ -496,6 +541,8 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
     $league_id    = get_post_meta( $game->ID, 'us_league_id',     true );
     $league_name  = $league_id ? get_the_title( $league_id ) : '';
     $is_postponed = us_is_game_postponed( $game->ID );
+    $is_cancelled = us_is_game_cancelled( $game->ID );
+    $is_locked    = $is_postponed || $is_cancelled;
     $is_past      = $date < $today;
     $is_today     = $date === $today;
     $date_obj     = $date ? new DateTime( $date ) : null;
@@ -512,7 +559,10 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
     $plate_reqs = us_get_slot_requests( $game->ID, 'plate' );
     $base_reqs  = us_get_slot_requests( $game->ID, 'base' );
 
-    if ( $is_postponed ) {
+    if ( $is_cancelled ) {
+        $status_label = 'Cancelled';
+        $status_class = 'us-alloc__status--cancelled';
+    } elseif ( $is_postponed ) {
         $status_label = 'Postponed';
         $status_class = 'us-alloc__status--postponed';
     } elseif ( $plate && ( ! $two_umps || $base ) ) {
@@ -551,6 +601,7 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
 
     $card_class = 'us-mgmt-card';
     if ( $is_postponed )               $card_class .= ' us-mgmt-card--postponed';
+    if ( $is_cancelled )               $card_class .= ' us-mgmt-card--cancelled';
     if ( $is_today )                   $card_class .= ' us-mgmt-card--today';
     if ( $is_past && ! $suppress_past ) $card_class .= ' us-mgmt-card--past';
 
@@ -581,6 +632,9 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
                     <?php if ( $is_postponed ) : ?>
                         <span class="us-alloc-games__badge us-alloc-games__badge--postponed">Postponed</span>
                     <?php endif; ?>
+                    <?php if ( $is_cancelled ) : ?>
+                        <span class="us-alloc-games__badge us-alloc-games__badge--cancelled">Cancelled</span>
+                    <?php endif; ?>
                     <?php if ( $is_today ) : ?>
                         <span class="us-alloc__today-badge">TODAY</span>
                     <?php endif; ?>
@@ -600,7 +654,7 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
             </div>
 
             <div class="us-mgmt-card__header-actions">
-                <?php if ( ! $is_postponed ) : ?>
+                <?php if ( ! $is_locked ) : ?>
                 <button type="button"
                         class="us-alloc-game-edit-btn us-alloc__action-btn us-alloc-games__action-btn--edit"
                         data-game="<?php echo $game->ID; ?>"
@@ -620,6 +674,12 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
                         data-label="<?php echo esc_attr( $away . ' at ' . $home ); ?>">
                     Postpone
                 </button>
+                <button type="button"
+                        class="us-alloc-game-cancel-btn us-alloc__action-btn us-alloc__action-btn--cancel"
+                        data-game="<?php echo $game->ID; ?>"
+                        data-label="<?php echo esc_attr( $away . ' at ' . $home ); ?>">
+                    Cancel
+                </button>
                 <?php endif; ?>
                 <button type="button"
                         class="us-alloc-game-delete-btn us-alloc__action-btn us-alloc-games__action-btn--delete"
@@ -635,12 +695,12 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
         <div class="us-mgmt-card__umpires">
             <div class="us-mgmt-card__slot">
                 <span class="us-mgmt-card__slot-label">Plate</span>
-                <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $plate_conflict ); ?>
+                <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_locked, $plate_conflict ); ?>
             </div>
             <?php if ( $two_umps ) : ?>
             <div class="us-mgmt-card__slot">
                 <span class="us-mgmt-card__slot-label">Base</span>
-                <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_postponed, $base_conflict ); ?>
+                <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_locked, $base_conflict ); ?>
             </div>
             <?php endif; ?>
         </div>
@@ -857,6 +917,18 @@ function us_mgmt_game_modals( $all_leagues ) {
             <div class="us-modal__actions">
                 <button id="us-games-postpone-confirm" class="us-btn us-alloc__postpone-confirm-btn">Confirm postponement</button>
                 <button id="us-games-postpone-cancel" class="us-btn us-btn--muted">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="us-games-cancel-modal" class="us-modal">
+        <div class="us-modal__inner">
+            <h3 class="us-modal__title">Cancel game</h3>
+            <p id="us-games-cancel-label" class="us-modal__subtitle"></p>
+            <p class="us-modal__hint">All assignments will be removed and assigned umpires notified. The game stays in the database marked as cancelled.</p>
+            <div class="us-modal__actions">
+                <button id="us-games-cancel-confirm" class="us-btn us-alloc__cancel-confirm-btn">Confirm cancellation</button>
+                <button id="us-games-cancel-close" class="us-btn us-btn--muted">Go back</button>
             </div>
         </div>
     </div>

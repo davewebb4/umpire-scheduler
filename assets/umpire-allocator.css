@@ -41,6 +41,7 @@
 .us-alloc__noshow-btn          { font-size: 11px; padding: 2px 6px; background: none; border: 1px solid #d63638; color: #d63638; border-radius: 3px; cursor: pointer; margin-left: 4px; }
 .us-alloc__action-btn          { font-size: 11px; padding: 4px 10px; background: none; border-radius: 3px; cursor: pointer; white-space: nowrap; }
 .us-alloc__action-btn--postpone { border: 1px solid #f59e0b; color: #f59e0b; }
+.us-alloc__action-btn--cancel   { border: 1px solid #dc6b19; color: #dc6b19; }
 .us-alloc__deny-btn            { color: #d63638; border: 1px solid #d63638; }
 .us-alloc__all-assigned        { color: #00a32a; font-weight: 600; }
 .us-alloc__postpone-confirm-btn { background: #f59e0b; color: #fff; border: none; }
@@ -210,6 +211,7 @@
 .us-alloc-games__badge--two      { background: #e8f0f8; color: #0c447c; }
 .us-alloc-games__badge--dh       { background: #fef3c7; color: #92400e; }
 .us-alloc-games__badge--postponed { background: #f0f0f0; color: #666; }
+.us-alloc-games__badge--cancelled { background: #fee2e2; color: #991b1b; }
 .us-alloc-games__actions         { display: flex; gap: 4px; flex-wrap: wrap; }
 .us-alloc-games__action-btn--edit   { border: 1px solid #0073aa; color: #0073aa; }
 .us-alloc-games__action-btn--delete { border: 1px solid #d63638; color: #d63638; }
@@ -339,6 +341,7 @@
 
 .us-page-wrap .us-alloc-games__action-btn--edit   { border: 1px solid #0073aa; color: #0073aa; }
 .us-page-wrap .us-alloc__action-btn--postpone     { border: 1px solid #f59e0b; color: #f59e0b; }
+.us-page-wrap .us-alloc__action-btn--cancel       { border: 1px solid #dc6b19; color: #dc6b19; }
 .us-page-wrap .us-alloc-games__action-btn--delete { border: 1px solid #d63638; color: #d63638; }
 
 .us-page-wrap .us-games-clear-btn,
