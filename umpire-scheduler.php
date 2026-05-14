@@ -6,6 +6,8 @@
  * Version:     1.5.6
  * Author:      Dave Webb
  * License:     GPL2
+ * GitHub Plugin URI: davewebb4/umpire-scheduler
+ * Primary Branch:    main
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -14,6 +16,19 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 define( 'US_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'US_URL',     plugin_dir_url( __FILE__ ) );
 define( 'US_VERSION', '1.5.6' );
+
+// ── Update checker ────────────────────────────────────────────
+require_once US_PATH . 'lib/plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+$usUpdateChecker = PucFactory::buildUpdateChecker(
+    'https://github.com/davewebb4/umpire-scheduler/',
+    __FILE__,
+    'umpire-scheduler'
+);
+$usUpdateChecker->setBranch( 'main' );
+if ( defined( 'UMPIRE_SCHEDULER_GITHUB_TOKEN' ) ) {
+    $usUpdateChecker->setAuthentication( UMPIRE_SCHEDULER_GITHUB_TOKEN );
+}
 
 // ── Core ──────────────────────────────────────────────────────
 require_once US_PATH . 'includes/core/settings.php';
