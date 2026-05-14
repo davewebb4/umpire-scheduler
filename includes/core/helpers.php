@@ -66,6 +66,11 @@ function us_is_game_postponed( $game_id ) {
     return get_post_meta( $game_id, 'us_game_status', true ) === 'postponed';
 }
 
+// Check if a game is cancelled
+function us_is_game_cancelled( $game_id ) {
+    return get_post_meta( $game_id, 'us_game_status', true ) === 'cancelled';
+}
+
 // Get the pay rate for a game (respects double header flag)
 function us_get_game_pay_rate( $game_id ) {
     $league_id = get_post_meta( $game_id, 'us_league_id',     true );

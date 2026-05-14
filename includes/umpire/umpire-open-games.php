@@ -181,6 +181,7 @@ function us_shortcode_open_games() {
     $open_games = [];
     foreach ( $games as $game ) {
         if ( us_is_game_postponed( $game->ID ) ) continue;
+        if ( us_is_game_cancelled( $game->ID ) ) continue;
 
         $league_id = get_post_meta( $game->ID, 'us_league_id', true );
         if ( $league_id && get_post_meta( $league_id, 'us_is_tournament', true ) === '1' ) continue;

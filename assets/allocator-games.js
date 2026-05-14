@@ -3,6 +3,7 @@ jQuery(function ($) {
     var nonce      = usAllocGames.nonce;
     var ajaxUrl    = usAllocGames.ajax_url;
     var postponeId = 0;
+    var cancelId   = 0;
 
     // ── Assign select enable/disable ──────────────────────────
     $( document ).on( 'change', '.us-games-assign-select', function () {
@@ -131,6 +132,31 @@ jQuery(function ($) {
         $.post( ajaxUrl, { action: 'us_allocator_delete_game', nonce, game_id }, function ( res ) {
             if ( res.success ) { location.reload(); }
             else { alert( 'Error: could not delete game.' ); }
+        } );
+    } );
+
+    // ── Cancel modal open ─────────────────────────────────────
+    $( document ).on( 'click', '.us-alloc-game-cancel-btn', function () {
+        cancelId = $( this ).data( 'game' );
+        $( '#us-games-cancel-label' ).text( $( this ).data( 'label' ) );
+        $( '#us-games-cancel-modal' ).css( 'display', 'flex' );
+    } );
+
+    $( '#us-games-cancel-close' ).on( 'click', function () { $( '#us-games-cancel-modal' ).hide(); } );
+    $( '#us-games-cancel-modal' ).on( 'click', function ( e ) { if ( e.target === this ) $( this ).hide(); } );
+
+    // ── Cancel confirm ────────────────────────────────────────
+    $( '#us-games-cancel-confirm' ).on( 'click', function () {
+        var $btn = $( this );
+        $btn.prop( 'disabled', true ).text( 'Cancelling...' );
+        $.post( ajaxUrl, { action: 'us_allocator_cancel_game', nonce, game_id: cancelId }, function ( res ) {
+            if ( res.success ) {
+                $( '#us-games-cancel-modal' ).hide();
+                location.reload();
+            } else {
+                alert( 'Error: ' + ( res.data || 'Could not cancel game.' ) );
+                $btn.prop( 'disabled', false ).text( 'Confirm cancellation' );
+            }
         } );
     } );
 
