@@ -28,7 +28,8 @@ function us_shortcode_schedule() {
         $status    = get_post_meta( $a->ID, 'us_status',      true );
         if ( $game_date >= $today
              && ! in_array( $status, [ 'declined', 'no-show', 'postponed' ] )
-             && ! us_is_game_postponed( $game_id ) ) {
+             && ! us_is_game_postponed( $game_id )
+             && ! us_is_game_cancelled( $game_id ) ) {
             $upcoming[] = [
                 'assignment' => $a,
                 'game_id'    => $game_id,

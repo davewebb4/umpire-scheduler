@@ -46,7 +46,7 @@ function us_shortcode_league_schedule() {
         );
         $all_postponed = ! empty( $games_on_date ) && array_reduce(
             $games_on_date,
-            fn( $carry, $g ) => $carry && us_is_game_postponed( $g->ID ),
+            fn( $carry, $g ) => $carry && ( us_is_game_postponed( $g->ID ) || us_is_game_cancelled( $g->ID ) ),
             true
         );
         if ( $all_postponed ) unset( $game_dates[ $d ] );
@@ -78,8 +78,8 @@ function us_shortcode_league_schedule() {
             ],
         ] );
 
-        // Filter out postponed games from public view
-        $games = array_values( array_filter( $all_date_games, fn( $g ) => ! us_is_game_postponed( $g->ID ) ) );
+        // Filter out postponed and cancelled games from public view
+        $games = array_values( array_filter( $all_date_games, fn( $g ) => ! us_is_game_postponed( $g->ID ) && ! us_is_game_cancelled( $g->ID ) ) );
     }
 
     $base_url    = home_url( '/' . us_setting( 'slug_league_schedule' ) . '/' );
@@ -135,7 +135,8 @@ function us_shortcode_league_schedule() {
                     $count = 0;
                     foreach ( $all_games as $g ) {
                         if ( get_post_meta( $g->ID, 'us_game_date', true ) === $d
-                             && ! us_is_game_postponed( $g->ID ) ) $count++;
+                             && ! us_is_game_postponed( $g->ID )
+                             && ! us_is_game_cancelled( $g->ID ) ) $count++;
                     }
                 ?>
                     <option value="<?php echo esc_url( $url ); ?>" <?php selected( $filter_date, $d ); ?>>
