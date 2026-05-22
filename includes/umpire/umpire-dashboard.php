@@ -114,7 +114,7 @@ function us_shortcode_dashboard() {
     } );
 
     $upcoming = array_values( array_filter( $upcoming, function( $item ) {
-        return ! us_is_game_postponed( $item['game_id'] );
+        return ! us_is_game_postponed( $item['game_id'] ) && ! us_is_game_cancelled( $item['game_id'] );
     } ) );
 
     // ── Open slot count ───────────────────────────────────────
@@ -132,6 +132,7 @@ function us_shortcode_dashboard() {
 
     foreach ( $games as $game ) {
         if ( us_is_game_postponed( $game->ID ) ) continue;
+        if ( us_is_game_cancelled( $game->ID ) ) continue;
         $game_date = get_post_meta( $game->ID, 'us_game_date', true );
         if ( in_array( $game_date, $unavail ) ) continue;
         $two_umps = get_post_meta( $game->ID, 'us_two_umpires', true ) === '1';
