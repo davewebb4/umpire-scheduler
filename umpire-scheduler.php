@@ -3,7 +3,7 @@
  * Plugin Name: Umpire Scheduler
  * Plugin URI:  https://gvsu.ca
  * Description: Slo-pitch umpire scheduling, assignment and pay tracking across multiple leagues.
- * Version:     1.5.6
+ * Version:     1.5.7
  * Author:      Dave Webb
  * License:     GPL2
  * GitHub Plugin URI: davewebb4/umpire-scheduler
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 // ── Constants ─────────────────────────────────────────────────
 define( 'US_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'US_URL',     plugin_dir_url( __FILE__ ) );
-define( 'US_VERSION', '1.5.6' );
+define( 'US_VERSION', '1.5.7' );
 
 // ── Update checker ────────────────────────────────────────────
 require_once US_PATH . 'lib/plugin-update-checker/plugin-update-checker.php';
