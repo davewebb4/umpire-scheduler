@@ -18,8 +18,8 @@ function us_shortcode_earnings() {
         'numberposts' => -1,
         'post_status' => 'publish',
         'meta_query'  => [
-            [ 'key' => 'us_umpire_id', 'value' => $umpire_id,  'compare' => '=' ],
-            [ 'key' => 'us_status',    'value' => 'confirmed', 'compare' => '=' ],
+            [ 'key' => 'us_umpire_id', 'value' => $umpire_id,                        'compare' => '=' ],
+            [ 'key' => 'us_status',    'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
         ],
     ] );
 

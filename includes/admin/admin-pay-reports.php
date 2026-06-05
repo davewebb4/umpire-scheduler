@@ -649,8 +649,8 @@ function us_admin_get_umpire_pay_summary( $umpire_id, $filter_league = 0 ) {
         'numberposts' => -1,
         'post_status' => 'publish',
         'meta_query'  => [
-            [ 'key' => 'us_umpire_id', 'value' => $umpire_id,  'compare' => '=' ],
-            [ 'key' => 'us_status',    'value' => 'confirmed', 'compare' => '=' ],
+            [ 'key' => 'us_umpire_id', 'value' => $umpire_id,                        'compare' => '=' ],
+            [ 'key' => 'us_status',    'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
         ],
     ] );
 
@@ -748,7 +748,7 @@ function us_get_tournament_pay_summary( $league_id ) {
         'numberposts' => -1,
         'post_status' => 'publish',
         'meta_query'  => [
-            [ 'key' => 'us_status', 'value' => 'confirmed', 'compare' => '=' ],
+            [ 'key' => 'us_status', 'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
         ],
     ] );
 

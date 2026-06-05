@@ -81,7 +81,7 @@ function us_shortcode_dashboard() {
         $status    = get_post_meta( $a->ID, 'us_status',      true );
         $pay       = floatval( get_post_meta( $a->ID, 'us_pay_amount', true ) );
 
-        if ( $status === 'confirmed' ) {
+        if ( in_array( $status, [ 'confirmed', 'postponed-paid' ] ) ) {
             $confirmed_count++;
             $league_id     = get_post_meta( $game_id, 'us_league_id', true );
             $is_tournament = $league_id ? get_post_meta( $league_id, 'us_is_tournament', true ) === '1' : false;
