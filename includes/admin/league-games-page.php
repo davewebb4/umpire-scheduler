@@ -597,8 +597,7 @@ function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assi
                 data-game="<?php echo $game_id; ?>"
                 data-position="<?php echo $position; ?>"
                 data-assignment="<?php echo $assignment_id; ?>"
-                style="max-width:160px;font-size:12px"
-                <?php echo $is_past ? 'disabled' : ''; ?>>
+                style="max-width:160px;font-size:12px">
             <option value="">— unassigned —</option>
             <?php if ( ! empty( $available ) ) : ?>
                 <optgroup label="Available">
@@ -623,7 +622,6 @@ function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assi
             <?php endif; ?>
         </select>
 
-        <?php if ( ! $is_past ) : ?>
         <div class="us-assignment-dropdown__status">
             <?php if ( $status === 'confirmed' ) : ?>
                 <span class="us-admin-status us-admin-status--confirmed">&#10003; Confirmed</span>
@@ -632,7 +630,7 @@ function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assi
                 <span class="us-admin-status us-admin-status--open">No-show</span>
             <?php elseif ( $status === 'postponed-paid' ) : ?>
                 <span class="us-admin-status">Postponed — paid</span>
-            <?php elseif ( $request_count > 0 ) : ?>
+            <?php elseif ( $request_count > 0 && ! $is_past ) : ?>
                 <?php
                 $names = [];
                 foreach ( $slot_requests as $r ) {
@@ -645,11 +643,10 @@ function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assi
                    class="us-assignment-dropdown__requests">
                     &#9679; <?php echo $request_count; ?> request<?php echo $request_count > 1 ? 's' : ''; ?> &rarr;
                 </a>
-            <?php else : ?>
+            <?php elseif ( ! $assignment_id && ! $is_past ) : ?>
                 <span class="us-admin-na">No requests yet</span>
             <?php endif; ?>
         </div>
-        <?php endif; ?>
     </div>
     <?php
     return ob_get_clean();
