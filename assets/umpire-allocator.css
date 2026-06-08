@@ -194,6 +194,7 @@
 .us-alloc-assign__row          { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .us-alloc-assign__select       { font-size: 12px; max-width: 150px; }
 .us-alloc-assign__opt--busy    { color: #999; }
+.us-alloc-assign__opt--unavail { color: #b45309; }
 .us-alloc-assign__status       { font-size: 11px; color: #d63638; }
 
 /* ── Allocator games page ──────────────────────────────────── */

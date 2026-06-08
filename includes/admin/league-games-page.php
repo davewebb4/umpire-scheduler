@@ -77,8 +77,12 @@ function us_league_games_page( $league ) {
 
     $available_umpires = [];
     $busy_umpires      = [];
+    $unavail_umpires   = [];
     foreach ( $all_umpires as $u ) {
-        if ( in_array( $u->ID, $unavail_ids ) ) continue;
+        if ( in_array( $u->ID, $unavail_ids ) ) {
+            $unavail_umpires[] = $u;
+            continue;
+        }
         if ( in_array( $u->ID, $assigned_ids ) ) {
             $busy_umpires[] = $u;
         } else {
@@ -300,12 +304,12 @@ function us_league_games_page( $league ) {
                         <?php if ( $is_dh ) : ?><span class="us-league-badge us-league-badge--dh">DH</span><?php endif; ?>
                     </td>
                     <td><?php echo esc_html( $field ); ?></td>
-                    <td><?php echo $is_postponed ? '<span class="us-admin-na">—</span>' : us_assignment_dropdown( $game->ID, 'plate', $plate_umpire_id, $plate, $plate_requests, $available_umpires, $busy_umpires, $is_past ); ?></td>
+                    <td><?php echo $is_postponed ? '<span class="us-admin-na">—</span>' : us_assignment_dropdown( $game->ID, 'plate', $plate_umpire_id, $plate, $plate_requests, $available_umpires, $busy_umpires, $is_past, $unavail_umpires ); ?></td>
                     <td>
                         <?php if ( $is_postponed ) : ?>
                             <span class="us-admin-na">—</span>
                         <?php elseif ( $two_umps === '1' ) : ?>
-                            <?php echo us_assignment_dropdown( $game->ID, 'base', $base_umpire_id, $base, $base_requests, $available_umpires, $busy_umpires, $is_past ); ?>
+                            <?php echo us_assignment_dropdown( $game->ID, 'base', $base_umpire_id, $base, $base_requests, $available_umpires, $busy_umpires, $is_past, $unavail_umpires ); ?>
                         <?php else : ?>
                             <span class="us-admin-na">Not enabled <a href="<?php echo get_edit_post_link( $game->ID ); ?>" class="us-league-enable-link">Enable</a></span>
                         <?php endif; ?>
@@ -580,7 +584,7 @@ function us_ajax_bulk_delete_games() {
 }
 
 // ── Assignment dropdown ───────────────────────────────────────
-function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assignment, $slot_requests, $available, $busy, $is_past ) {
+function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assignment, $slot_requests, $available, $busy, $is_past, $unavail = [] ) {
     $assignment_id = $assignment ? $assignment->ID : 0;
     $status        = $assignment ? get_post_meta( $assignment->ID, 'us_status', true ) : '';
     $request_count = count( $slot_requests );
@@ -607,6 +611,13 @@ function us_assignment_dropdown( $game_id, $position, $selected_umpire_id, $assi
                 <optgroup label="Already assigned today">
                     <?php foreach ( $busy as $u ) : ?>
                         <option value="<?php echo $u->ID; ?>" <?php selected( $selected_umpire_id, $u->ID ); ?> style="color:#999"><?php echo esc_html( $u->post_title ); ?></option>
+                    <?php endforeach; ?>
+                </optgroup>
+            <?php endif; ?>
+            <?php if ( ! empty( $unavail ) ) : ?>
+                <optgroup label="&#9888; Marked unavailable (admin override)">
+                    <?php foreach ( $unavail as $u ) : ?>
+                        <option value="<?php echo $u->ID; ?>" <?php selected( $selected_umpire_id, $u->ID ); ?> style="color:#b45309"><?php echo esc_html( $u->post_title ); ?> — unavailable</option>
                     <?php endforeach; ?>
                 </optgroup>
             <?php endif; ?>
