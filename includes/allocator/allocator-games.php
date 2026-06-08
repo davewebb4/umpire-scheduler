@@ -362,9 +362,13 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
     // Availability is the same for both games (same date) — fetch once
     $unavail_ids  = us_get_unavailable_umpires( $date );
     $assigned_ids = us_get_assigned_umpires_on_date( $date );
-    $avail = $busy = [];
+    $is_admin     = current_user_can( 'manage_options' );
+    $avail = $busy = $unavail_umps = [];
     foreach ( $all_umpires as $u ) {
-        if ( in_array( $u->ID, $unavail_ids ) ) continue;
+        if ( in_array( $u->ID, $unavail_ids ) ) {
+            if ( $is_admin ) $unavail_umps[] = $u;
+            continue;
+        }
         if ( in_array( $u->ID, $assigned_ids ) ) { $busy[] = $u; } else { $avail[] = $u; }
     }
 
@@ -510,12 +514,12 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             <div class="us-mgmt-card__umpires">
                 <div class="us-mgmt-card__slot">
                     <span class="us-mgmt-card__slot-label">Plate</span>
-                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_locked, $plate_conflict ); ?>
+                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_locked, $plate_conflict, $unavail_umps ); ?>
                 </div>
                 <?php if ( $two_umps ) : ?>
                 <div class="us-mgmt-card__slot">
                     <span class="us-mgmt-card__slot-label">Base</span>
-                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_locked, $base_conflict ); ?>
+                    <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_locked, $base_conflict, $unavail_umps ); ?>
                 </div>
                 <?php endif; ?>
             </div>
@@ -578,6 +582,7 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
 
     $unavail_ids  = us_get_unavailable_umpires( $date );
     $assigned_ids = us_get_assigned_umpires_on_date( $date );
+    $is_admin     = current_user_can( 'manage_options' );
 
     $all_game_requests = get_posts( [
         'post_type'   => US_PT_ASSIGNMENT,
@@ -593,9 +598,12 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
         $pending_uids[] = get_post_meta( $gr->ID, 'us_umpire_id', true );
     }
 
-    $avail = $busy = [];
+    $avail = $busy = $unavail_umps = [];
     foreach ( $all_umpires as $u ) {
-        if ( in_array( $u->ID, $unavail_ids ) ) continue;
+        if ( in_array( $u->ID, $unavail_ids ) ) {
+            if ( $is_admin ) $unavail_umps[] = $u;
+            continue;
+        }
         if ( in_array( $u->ID, $assigned_ids ) ) { $busy[] = $u; } else { $avail[] = $u; }
     }
 
@@ -695,12 +703,12 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
         <div class="us-mgmt-card__umpires">
             <div class="us-mgmt-card__slot">
                 <span class="us-mgmt-card__slot-label">Plate</span>
-                <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_locked, $plate_conflict ); ?>
+                <?php echo us_allocator_games_umpire_cell( $game->ID, 'plate', $plate_name, $plate, $plate_reqs, $avail, $busy, $pending_uids, false, $is_locked, $plate_conflict, $unavail_umps ); ?>
             </div>
             <?php if ( $two_umps ) : ?>
             <div class="us-mgmt-card__slot">
                 <span class="us-mgmt-card__slot-label">Base</span>
-                <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_locked, $base_conflict ); ?>
+                <?php echo us_allocator_games_umpire_cell( $game->ID, 'base', $base_name, $base, $base_reqs, $avail, $busy, $pending_uids, false, $is_locked, $base_conflict, $unavail_umps ); ?>
             </div>
             <?php endif; ?>
         </div>
@@ -944,7 +952,7 @@ function us_mgmt_game_js( $first_league_id = '' ) {
 }
 
 // ── Umpire cell helper ────────────────────────────────────────
-function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment, $requests, $avail, $busy, $pending_uids, $is_past, $is_postponed, $is_conflict = false ) {
+function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment, $requests, $avail, $busy, $pending_uids, $is_past, $is_postponed, $is_conflict = false, $unavail_umps = [] ) {
     ob_start();
 
     if ( $is_postponed ) {
@@ -1000,6 +1008,13 @@ function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment
                         <optgroup label="Already assigned elsewhere">
                             <?php foreach ( $busy_clean as $u ) : ?>
                                 <option value="<?php echo $u->ID; ?>" class="us-alloc-assign__opt--busy"><?php echo esc_html( $u->post_title ); ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $unavail_umps ) ) : ?>
+                        <optgroup label="&#9888; Marked unavailable (admin override)">
+                            <?php foreach ( $unavail_umps as $u ) : ?>
+                                <option value="<?php echo $u->ID; ?>" class="us-alloc-assign__opt--unavail"><?php echo esc_html( $u->post_title ); ?> — unavailable</option>
                             <?php endforeach; ?>
                         </optgroup>
                     <?php endif; ?>
