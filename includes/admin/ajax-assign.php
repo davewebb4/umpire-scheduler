@@ -184,6 +184,38 @@ function us_ajax_postpone_game() {
     ] );
 }
 
+// ── Unpostpone game ───────────────────────────────────────────
+add_action( 'wp_ajax_us_unpostpone_game', 'us_ajax_unpostpone_game' );
+function us_ajax_unpostpone_game() {
+    check_ajax_referer( 'us_assign_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) && ! us_is_allocator() ) wp_send_json_error( 'Unauthorized' );
+
+    $game_id = absint( $_POST['game_id'] ?? 0 );
+    if ( ! $game_id ) wp_send_json_error( 'Invalid game' );
+
+    update_post_meta( $game_id, 'us_game_status', 'active' );
+
+    // Revert any postponed-paid assignments back to confirmed
+    $assignments = get_posts( [
+        'post_type'   => US_PT_ASSIGNMENT,
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'meta_query'  => [
+            [ 'key' => 'us_game_id', 'value' => $game_id, 'compare' => '=' ],
+            [ 'key' => 'us_status',  'value' => 'postponed-paid', 'compare' => '=' ],
+        ],
+    ] );
+
+    foreach ( $assignments as $a ) {
+        update_post_meta( $a->ID, 'us_status', 'confirmed' );
+    }
+
+    wp_send_json_success( [
+        'game_id' => $game_id,
+        'msg'     => 'Game restored to active.',
+    ] );
+}
+
 // ── Delete game ───────────────────────────────────────────────
 add_action( 'wp_ajax_us_delete_game', 'us_ajax_delete_game' );
 function us_ajax_delete_game() {

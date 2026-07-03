@@ -338,6 +338,10 @@ function us_league_games_page( $league ) {
                             <button class="us-postpone-game-btn button button-small"
                                     data-game="<?php echo $game->ID; ?>"
                                     data-label="<?php echo esc_attr( $away . ' at ' . $home ); ?>">Postpone</button>
+                            <?php else : ?>
+                            <button class="us-unpostpone-game-btn button button-small"
+                                    data-game="<?php echo $game->ID; ?>"
+                                    data-label="<?php echo esc_attr( $away . ' at ' . $home ); ?>">Unpostpone</button>
                             <?php endif; ?>
                             <button class="us-delete-game-btn button button-small" data-game="<?php echo $game->ID; ?>">Delete</button>
                         </div>
@@ -506,6 +510,20 @@ function us_postpone_modal() {
             },function(res){
                 if(res.success){ $('#us-postpone-modal').hide(); location.reload(); }
                 else { alert('Error: '+(res.data||'Could not postpone game.')); $btn.prop('disabled',false).text('Confirm postponement'); }
+            });
+        });
+
+        $(document).on('click', '.us-unpostpone-game-btn', function(){
+            var gameId = $(this).data('game');
+            var label  = $(this).data('label');
+            if ( ! confirm( 'Restore "' + label + '" to active? Any postponed-paid assignments will be set back to confirmed.' ) ) return;
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('Saving...');
+            $.post(ajaxurl, {
+                action: 'us_unpostpone_game', nonce: usAssign.nonce, game_id: gameId
+            }, function(res) {
+                if ( res.success ) { location.reload(); }
+                else { alert('Error: ' + (res.data || 'Could not restore game.')); $btn.prop('disabled', false).text('Unpostpone'); }
             });
         });
     });
