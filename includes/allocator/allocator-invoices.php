@@ -62,18 +62,39 @@ function us_ajax_invoice_get_months() {
     wp_send_json_success( [ 'months' => $result ] );
 }
 
+// ── Format a period label from an array of YYYY-MM month strings ─
+function us_invoice_period_label( $months ) {
+    if ( empty( $months ) ) return '';
+    sort( $months );
+    if ( count( $months ) === 1 ) {
+        return date( 'F Y', strtotime( $months[0] . '-01' ) );
+    }
+    $first_year = substr( $months[0], 0, 4 );
+    $last_year  = substr( end( $months ), 0, 4 );
+    $first_label = ( $first_year === $last_year )
+        ? date( 'F', strtotime( $months[0] . '-01' ) )
+        : date( 'F Y', strtotime( $months[0] . '-01' ) );
+    $last_label  = date( 'F Y', strtotime( end( $months ) . '-01' ) );
+    return $first_label . ' – ' . $last_label;
+}
+
 // ── Build invoice breakdown ───────────────────────────────────
-// Returns per-game rows and totals. Umpire pay comes from actual
-// us_pay_amount on each assignment (respects manual overrides).
-// Alloc/admin fees are charged per umpire slot, matching pay-reports logic.
-function us_get_invoice_breakdown( $league_id, $month = '' ) {
+// $months: array of YYYY-MM strings; empty = all games (tournament).
+// Umpire pay comes from actual us_pay_amount on each assignment.
+// Alloc/admin fees are per umpire slot, matching pay-reports logic.
+function us_get_invoice_breakdown( $league_id, $months = [] ) {
+    if ( is_string( $months ) && $months !== '' ) {
+        $months = array_values( array_filter( array_map( 'trim', explode( ',', $months ) ) ) );
+    }
+
     $alloc_rate = floatval( get_post_meta( $league_id, 'us_allocator_rate', true ) );
     $admin_rate = floatval( get_post_meta( $league_id, 'us_admin_rate',     true ) );
 
     $meta_query = [ [ 'key' => 'us_league_id', 'value' => $league_id, 'compare' => '=' ] ];
-    if ( $month ) {
-        $start = $month . '-01';
-        $end   = date( 'Y-m-t', strtotime( $start ) );
+    if ( ! empty( $months ) ) {
+        sort( $months );
+        $start = $months[0] . '-01';
+        $end   = date( 'Y-m-t', strtotime( end( $months ) . '-01' ) );
         $meta_query[] = [ 'key' => 'us_game_date', 'value' => $start, 'compare' => '>=' ];
         $meta_query[] = [ 'key' => 'us_game_date', 'value' => $end,   'compare' => '<=' ];
     }
@@ -96,6 +117,13 @@ function us_get_invoice_breakdown( $league_id, $month = '' ) {
     ];
 
     foreach ( $games as $game ) {
+        $game_date  = get_post_meta( $game->ID, 'us_game_date', true );
+        $month_key  = $game_date ? substr( $game_date, 0, 7 ) : '';
+
+        // When multiple months selected, skip games that fall in an unselected month
+        // (the date range query may include gaps between non-consecutive months)
+        if ( ! empty( $months ) && ! in_array( $month_key, $months, true ) ) continue;
+
         $assignments = get_posts( [
             'post_type'   => US_PT_ASSIGNMENT,
             'numberposts' => -1,
@@ -119,7 +147,8 @@ function us_get_invoice_breakdown( $league_id, $month = '' ) {
         $game_total = $umpire_pay + $game_alloc + $game_admin;
 
         $rows[] = [
-            'date'       => get_post_meta( $game->ID, 'us_game_date', true ),
+            'date'       => $game_date,
+            'month_key'  => $month_key,
             'title'      => $game->post_title,
             'slots'      => $slot_count,
             'is_dh'      => get_post_meta( $game->ID, 'us_double_header', true ) === '1',
@@ -166,11 +195,12 @@ function us_ajax_send_invoice() {
     if ( ! $contact_email ) wp_send_json_error( 'No contact email on file for this league.' );
 
     $is_tournament = get_post_meta( $league_id, 'us_is_tournament', true ) === '1';
+    $months        = array_values( array_filter( array_map( 'trim', explode( ',', $month ) ) ) );
 
     // Legacy path: pay-reports modal passes game_count + rate instead of month
     $legacy_game_count = absint( $_POST['game_count'] ?? 0 );
     $legacy_rate       = floatval( $_POST['rate']       ?? 0 );
-    if ( ! $month && $legacy_game_count && $legacy_rate ) {
+    if ( empty( $months ) && $legacy_game_count && $legacy_rate ) {
         $legacy_total = $legacy_game_count * $legacy_rate;
         $breakdown = [
             'rows'   => [],
@@ -178,7 +208,7 @@ function us_ajax_send_invoice() {
             'rates'  => [ 'alloc' => 0.0, 'admin' => 0.0 ],
         ];
     } else {
-        $breakdown = us_get_invoice_breakdown( $league_id, $is_tournament ? '' : $month );
+        $breakdown = us_get_invoice_breakdown( $league_id, $is_tournament ? [] : $months );
     }
 
     $org_name      = us_setting( 'org_name' )  ?: us_setting( 'org_short' );
@@ -455,23 +485,27 @@ function us_shortcode_allocator_invoices() {
                         return;
                     }
 
-                    var html = '<div class="us-form-group"><label style="display:block;margin-bottom:8px;font-weight:600;">Month</label>';
+                    var html = '<div class="us-form-group"><label style="display:block;margin-bottom:8px;font-weight:600;">Month(s)</label>';
                     data.months.forEach( function(m, i) {
                         var checked = ( i === data.months.length - 1 ) ? ' checked' : '';
                         html += '<label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:1px solid #dde3ea;border-radius:6px;cursor:pointer;margin-bottom:6px;font-size:14px;transition:background .1s;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">'
-                              + '<input type="radio" name="_inv_month_radio" value="' + m.value + '"' + checked + ' style="margin:0;flex-shrink:0;">'
+                              + '<input type="checkbox" class="us-inv-month-cb" value="' + m.value + '"' + checked + ' style="margin:0;flex-shrink:0;">'
                               + '<span style="flex:1;">' + m.label + '</span>'
                               + '<span style="color:#888;font-size:12px;">' + m.games + ' game' + ( m.games !== 1 ? 's' : '' ) + '</span>'
                               + '</label>';
-                        if ( checked ) monthVal.value = m.value;
                     } );
                     html += '</div>';
                     monthList.innerHTML = html;
-                    submitBtn.style.display = '';
 
-                    monthList.querySelectorAll('input[type=radio]').forEach( function(r) {
-                        r.addEventListener('change', function() { monthVal.value = this.value; });
+                    function syncMonthVal() {
+                        var checked = Array.from( monthList.querySelectorAll('.us-inv-month-cb:checked') ).map( function(c) { return c.value; } );
+                        monthVal.value = checked.join(',');
+                        submitBtn.style.display = checked.length ? '' : 'none';
+                    }
+                    monthList.querySelectorAll('.us-inv-month-cb').forEach( function(cb) {
+                        cb.addEventListener('change', syncMonthVal);
                     } );
+                    syncMonthVal();
                 } )
                 .catch( function() {
                     loading.style.display = 'none';
@@ -482,10 +516,11 @@ function us_shortcode_allocator_invoices() {
         </script>
 
         <?php elseif ( $step === 2 ) :
-            $breakdown = us_get_invoice_breakdown( $league_id, $is_tournament ? '' : $month );
-            $rows      = $breakdown['rows'];
-            $totals    = $breakdown['totals'];
-            $rates     = $breakdown['rates'];
+            $months_arr = $is_tournament ? [] : array_values( array_filter( array_map( 'trim', explode( ',', $month ) ) ) );
+            $breakdown  = us_get_invoice_breakdown( $league_id, $months_arr );
+            $rows       = $breakdown['rows'];
+            $totals     = $breakdown['totals'];
+            $rates      = $breakdown['rates'];
 
             if ( $is_tournament ) {
                 $t_start = get_post_meta( $league_id, 'us_tourney_start', true );
@@ -494,13 +529,20 @@ function us_shortcode_allocator_invoices() {
                     ? date( 'M j', strtotime( $t_start ) ) . ' – ' . date( 'M j, Y', strtotime( $t_end ) )
                     : $league->post_title;
             } else {
-                $period = date( 'F Y', strtotime( $month . '-01' ) );
+                $period = us_invoice_period_label( $months_arr );
             }
 
             $contact_email = get_post_meta( $league_id, 'us_contact_email', true );
             $contact_name  = get_post_meta( $league_id, 'us_contact_name',  true );
             $show_alloc    = $rates['alloc'] > 0;
             $show_admin    = $rates['admin'] > 0;
+
+            // Group rows by month for display
+            $rows_by_month = [];
+            foreach ( $rows as $row ) {
+                $rows_by_month[ $row['month_key'] ][] = $row;
+            }
+            ksort( $rows_by_month );
         ?>
         <!-- ── Step 2: Breakdown review ──────────────────────── -->
         <div style="margin-bottom:20px;">
@@ -544,7 +586,7 @@ function us_shortcode_allocator_invoices() {
             </div>
         </div>
 
-        <!-- Per-game breakdown -->
+        <!-- Per-game breakdown grouped by month -->
         <div style="overflow-x:auto;margin-bottom:28px;">
         <table class="us-table" style="width:100%;min-width:560px;">
             <thead>
@@ -563,7 +605,24 @@ function us_shortcode_allocator_invoices() {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ( $rows as $row ) : ?>
+                <?php foreach ( $rows_by_month as $mk => $month_rows ) :
+                    $m_totals = [ 'slots' => 0, 'umpire_pay' => 0.0, 'alloc' => 0.0, 'admin' => 0.0, 'grand' => 0.0 ];
+                    foreach ( $month_rows as $r ) {
+                        $m_totals['slots']      += $r['slots'];
+                        $m_totals['umpire_pay'] += $r['umpire_pay'];
+                        $m_totals['alloc']      += $r['alloc'];
+                        $m_totals['admin']      += $r['admin'];
+                        $m_totals['grand']      += $r['total'];
+                    }
+                    $col_count = 4 + ( $show_alloc ? 1 : 0 ) + ( $show_admin ? 1 : 0 );
+                    $month_label = date( 'F Y', strtotime( $mk . '-01' ) );
+                ?>
+                <?php if ( count( $rows_by_month ) > 1 ) : ?>
+                <tr>
+                    <td colspan="<?php echo $col_count; ?>" style="background:#f0f4f8;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#555;padding:7px 12px;"><?php echo esc_html( $month_label ); ?></td>
+                </tr>
+                <?php endif; ?>
+                <?php foreach ( $month_rows as $row ) : ?>
                 <tr>
                     <td style="white-space:nowrap;"><?php echo esc_html( date( 'M j', strtotime( $row['date'] ) ) ); ?></td>
                     <td>
@@ -583,10 +642,24 @@ function us_shortcode_allocator_invoices() {
                     <td style="text-align:right;font-weight:600;">$<?php echo number_format( $row['total'], 2 ); ?></td>
                 </tr>
                 <?php endforeach; ?>
+                <?php if ( count( $rows_by_month ) > 1 ) : ?>
+                <tr style="background:#f8fafc;font-style:italic;color:#555;border-top:1px solid #dde3ea;">
+                    <td colspan="3" style="text-align:right;padding-right:12px;font-size:13px;"><?php echo esc_html( $month_label ); ?> subtotal</td>
+                    <td style="text-align:right;font-size:13px;">$<?php echo number_format( $m_totals['umpire_pay'], 2 ); ?></td>
+                    <?php if ( $show_alloc ) : ?>
+                    <td style="text-align:right;font-size:13px;">$<?php echo number_format( $m_totals['alloc'], 2 ); ?></td>
+                    <?php endif; ?>
+                    <?php if ( $show_admin ) : ?>
+                    <td style="text-align:right;font-size:13px;">$<?php echo number_format( $m_totals['admin'], 2 ); ?></td>
+                    <?php endif; ?>
+                    <td style="text-align:right;font-size:13px;">$<?php echo number_format( $m_totals['grand'], 2 ); ?></td>
+                </tr>
+                <?php endif; ?>
+                <?php endforeach; ?>
             </tbody>
             <tfoot>
                 <tr style="font-weight:700;background:#f0f4f8;border-top:2px solid #c5cfd9;">
-                    <td colspan="3" style="text-align:right;padding-right:12px;">Totals</td>
+                    <td colspan="3" style="text-align:right;padding-right:12px;">Total</td>
                     <td style="text-align:right;">$<?php echo number_format( $totals['umpire_pay'], 2 ); ?></td>
                     <?php if ( $show_alloc ) : ?>
                     <td style="text-align:right;">$<?php echo number_format( $totals['alloc'], 2 ); ?></td>
@@ -623,9 +696,10 @@ function us_shortcode_allocator_invoices() {
         <?php endif; // rows ?>
 
         <?php elseif ( $step === 3 ) :
-            $breakdown = us_get_invoice_breakdown( $league_id, $is_tournament ? '' : $month );
-            $totals    = $breakdown['totals'];
-            $rates     = $breakdown['rates'];
+            $months_arr = $is_tournament ? [] : array_values( array_filter( array_map( 'trim', explode( ',', $month ) ) ) );
+            $breakdown  = us_get_invoice_breakdown( $league_id, $months_arr );
+            $totals     = $breakdown['totals'];
+            $rates      = $breakdown['rates'];
             $show_alloc = $rates['alloc'] > 0;
             $show_admin = $rates['admin'] > 0;
 
@@ -636,7 +710,7 @@ function us_shortcode_allocator_invoices() {
                     ? date( 'M j', strtotime( $t_start ) ) . ' – ' . date( 'M j, Y', strtotime( $t_end ) )
                     : $league->post_title;
             } else {
-                $period = date( 'F Y', strtotime( $month . '-01' ) );
+                $period = us_invoice_period_label( $months_arr );
             }
 
             $contact_name  = get_post_meta( $league_id, 'us_contact_name',  true );
