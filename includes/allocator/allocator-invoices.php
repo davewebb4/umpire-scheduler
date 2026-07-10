@@ -283,31 +283,11 @@ function us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdow
         <tr>
           <td style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">
             Umpire services &mdash; <?php echo esc_html( $league->post_title ); ?><br>
-            <span style="font-size:12px;color:#888;"><?php echo esc_html( $period ); ?></span>
+            <span style="font-size:12px;color:#888;"><?php echo esc_html( $period ); ?> &bull; <?php echo intval( $totals['games'] ); ?> games &bull; <?php echo intval( $totals['slots'] ); ?> umpire slots</span>
           </td>
           <td align="center" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;"><?php echo intval( $totals['slots'] ); ?></td>
-          <td align="right"  style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $totals['umpire_pay'], 2 ); ?></td>
+          <td align="right"  style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
         </tr>
-        <?php if ( $rates['alloc'] ) : ?>
-        <tr>
-          <td style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">
-            Allocator fee<br>
-            <span style="font-size:12px;color:#888;"><?php echo intval( $totals['slots'] ); ?> umpire slots &times; $<?php echo number_format( $rates['alloc'], 2 ); ?></span>
-          </td>
-          <td align="center" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;"><?php echo intval( $totals['slots'] ); ?></td>
-          <td align="right"  style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $totals['alloc'], 2 ); ?></td>
-        </tr>
-        <?php endif; ?>
-        <?php if ( $rates['admin'] ) : ?>
-        <tr>
-          <td style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">
-            Administrative fee<br>
-            <span style="font-size:12px;color:#888;"><?php echo intval( $totals['slots'] ); ?> umpire slots &times; $<?php echo number_format( $rates['admin'], 2 ); ?></span>
-          </td>
-          <td align="center" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;"><?php echo intval( $totals['slots'] ); ?></td>
-          <td align="right"  style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $totals['admin'], 2 ); ?></td>
-        </tr>
-        <?php endif; ?>
         <tr>
           <td colspan="2" align="right" style="padding:14px 10px 4px;font-size:13px;font-weight:bold;color:#091b33;">Total Due</td>
           <td align="right" style="padding:14px 10px 4px;font-size:20px;font-weight:bold;color:#091b33;">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
@@ -783,31 +763,11 @@ function us_shortcode_allocator_invoices() {
                     <tr>
                         <td>
                             Umpire services — <?php echo esc_html( $league->post_title ); ?>
-                            <div class="us-invoice-doc__line-sub"><?php echo esc_html( $period ); ?> &bull; <?php echo intval( $totals['games'] ); ?> games</div>
+                            <div class="us-invoice-doc__line-sub"><?php echo esc_html( $period ); ?> &bull; <?php echo intval( $totals['games'] ); ?> games &bull; <?php echo intval( $totals['slots'] ); ?> umpire slots</div>
                         </td>
                         <td class="us-invoice-doc__cell-center"><?php echo intval( $totals['slots'] ); ?></td>
-                        <td class="us-invoice-doc__cell-right">$<?php echo number_format( $totals['umpire_pay'], 2 ); ?></td>
+                        <td class="us-invoice-doc__cell-right">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
                     </tr>
-                    <?php if ( $show_alloc ) : ?>
-                    <tr>
-                        <td>
-                            Allocator fee
-                            <div class="us-invoice-doc__line-sub"><?php echo intval( $totals['slots'] ); ?> umpire slots &times; $<?php echo number_format( $rates['alloc'], 2 ); ?>/slot</div>
-                        </td>
-                        <td class="us-invoice-doc__cell-center"><?php echo intval( $totals['slots'] ); ?></td>
-                        <td class="us-invoice-doc__cell-right">$<?php echo number_format( $totals['alloc'], 2 ); ?></td>
-                    </tr>
-                    <?php endif; ?>
-                    <?php if ( $show_admin ) : ?>
-                    <tr>
-                        <td>
-                            Administrative fee
-                            <div class="us-invoice-doc__line-sub"><?php echo intval( $totals['slots'] ); ?> umpire slots &times; $<?php echo number_format( $rates['admin'], 2 ); ?>/slot</div>
-                        </td>
-                        <td class="us-invoice-doc__cell-center"><?php echo intval( $totals['slots'] ); ?></td>
-                        <td class="us-invoice-doc__cell-right">$<?php echo number_format( $totals['admin'], 2 ); ?></td>
-                    </tr>
-                    <?php endif; ?>
                 </tbody>
                 <tfoot>
                     <tr>
