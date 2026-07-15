@@ -783,6 +783,33 @@ function us_shortcode_allocator_games() {
 
     $all_umpires = us_get_active_umpires();
 
+    // Build open/partial game list for PDF export
+    $export_games = [];
+    foreach ( $games as $game ) {
+        if ( us_is_game_postponed( $game->ID ) || us_is_game_cancelled( $game->ID ) ) continue;
+        $plate    = us_get_confirmed_assignment( $game->ID, 'plate' );
+        $two_umps = get_post_meta( $game->ID, 'us_two_umpires', true ) === '1';
+        $base     = $two_umps ? us_get_confirmed_assignment( $game->ID, 'base' ) : null;
+        if ( $plate && ( ! $two_umps || $base ) ) continue; // fully confirmed — skip
+        $needed = [];
+        if ( ! $plate )             $needed[] = 'Plate';
+        if ( $two_umps && ! $base ) $needed[] = 'Base';
+        $export_games[] = [
+            'date'   => get_post_meta( $game->ID, 'us_game_date', true ),
+            'time'   => get_post_meta( $game->ID, 'us_game_time', true ),
+            'home'   => get_post_meta( $game->ID, 'us_home_team', true ),
+            'away'   => get_post_meta( $game->ID, 'us_away_team', true ),
+            'field'  => get_post_meta( $game->ID, 'us_field',     true ),
+            'status' => ( $plate || ( $two_umps && $base ) ) ? 'Partial' : 'Open',
+            'needed' => implode( ' + ', $needed ),
+        ];
+    }
+
+    $org_name    = us_setting( 'org_name' ) ?: us_setting( 'org_short' );
+    $export_league_name = $selected_league_id
+        ? get_the_title( $selected_league_id )
+        : 'All Leagues';
+
     ob_start();
     ?>
     <div class="us-dashboard">
@@ -794,6 +821,9 @@ function us_shortcode_allocator_games() {
             </div>
             <div class="us-alloc-games__header-actions">
                 <button id="us-add-game-btn" class="us-btn us-alloc-games__add-btn">+ Add New Game</button>
+                <?php if ( ! empty( $export_games ) ) : ?>
+                <button id="us-oge-export-btn" class="us-btn us-btn--muted us-btn--sm">&#8659; Export open games (<?php echo count( $export_games ); ?>)</button>
+                <?php endif; ?>
                 <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_allocator_past_games' ) . '/' ) ); ?>"
                    class="us-btn us-btn--muted us-btn--sm">&#x23F4; Past Games</a>
                 <a href="<?php echo esc_url( home_url( '/' . us_setting( 'slug_allocator_dashboard' ) . '/' ) ); ?>"
@@ -854,6 +884,78 @@ function us_shortcode_allocator_games() {
 
     <?php echo us_mgmt_game_modals( $all_leagues ); ?>
     <?php echo us_mgmt_game_js(); ?>
+
+    <?php if ( ! empty( $export_games ) ) : ?>
+    <!-- Hidden PDF export document -->
+    <div id="us-oge-print" style="display:none;">
+        <div style="font-family:Arial,sans-serif;color:#333;font-size:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:3px solid #1a3a5c;">
+                <div>
+                    <div style="font-size:18px;font-weight:700;color:#1a3a5c;"><?php echo esc_html( $org_name ); ?></div>
+                    <div style="font-size:12px;color:#666;margin-top:4px;">Open Games &mdash; <?php echo esc_html( $export_league_name ); ?> &mdash; <?php echo esc_html( $month_label ); ?></div>
+                </div>
+                <div style="text-align:right;font-size:11px;color:#888;line-height:1.8;">
+                    <div>Generated: <?php echo date( 'F j, Y' ); ?></div>
+                    <div><?php echo count( $export_games ); ?> game<?php echo count( $export_games ) !== 1 ? 's' : ''; ?> needing umpires</div>
+                </div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                <thead>
+                    <tr style="background:#f0f4f8;">
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;white-space:nowrap;">Date</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Day</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;white-space:nowrap;">Time</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Home</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Away</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Field</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Needed</th>
+                        <th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $export_games as $eg ) :
+                        $status_bg    = $eg['status'] === 'Open' ? '#fde8e8' : '#fff4e0';
+                        $status_color = $eg['status'] === 'Open' ? '#b32d2e'  : '#7a5200';
+                    ?>
+                    <tr style="border-bottom:1px solid #f0f0f0;">
+                        <td style="padding:8px 9px;white-space:nowrap;"><?php echo esc_html( date( 'M j, Y', strtotime( $eg['date'] ) ) ); ?></td>
+                        <td style="padding:8px 9px;"><?php echo esc_html( date( 'D', strtotime( $eg['date'] ) ) ); ?></td>
+                        <td style="padding:8px 9px;white-space:nowrap;"><?php echo $eg['time'] ? esc_html( date( 'g:i a', strtotime( $eg['time'] ) ) ) : '—'; ?></td>
+                        <td style="padding:8px 9px;"><?php echo esc_html( $eg['home'] ); ?></td>
+                        <td style="padding:8px 9px;"><?php echo esc_html( $eg['away'] ); ?></td>
+                        <td style="padding:8px 9px;"><?php echo esc_html( $eg['field'] ?: '—' ); ?></td>
+                        <td style="padding:8px 9px;"><span style="display:inline-block;padding:2px 6px;background:#f0f4f8;border-radius:3px;font-size:10px;font-weight:600;"><?php echo esc_html( $eg['needed'] ); ?></span></td>
+                        <td style="padding:8px 9px;"><span style="display:inline-block;padding:2px 6px;background:<?php echo $status_bg; ?>;color:<?php echo $status_color; ?>;border-radius:3px;font-size:10px;font-weight:600;"><?php echo esc_html( $eg['status'] ); ?></span></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+    document.getElementById('us-oge-export-btn').addEventListener('click', function() {
+        var btn = this;
+        btn.disabled    = true;
+        btn.textContent = 'Generating…';
+        var el = document.getElementById('us-oge-print');
+        el.style.display = '';
+        html2pdf().set({
+            margin:      [10, 10, 10, 10],
+            filename:    'open-games-<?php echo esc_js( sanitize_title( $export_league_name ) ); ?>-<?php echo esc_js( $selected_month ); ?>.pdf',
+            image:       { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF:       { unit: 'mm', format: 'letter', orientation: 'landscape' },
+        }).from(el).save().then(function() {
+            el.style.display = 'none';
+            btn.disabled    = false;
+            btn.textContent = '⬇ Export open games (<?php echo count( $export_games ); ?>)';
+        });
+    });
+    </script>
+    <?php endif; ?>
+
     <?php
     return ob_get_clean();
 }
