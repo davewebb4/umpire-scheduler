@@ -168,10 +168,26 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
 
     usort( $rows, fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
 
+    // Group rows by per-slot umpire pay rate for summary display
+    $by_rate = [];
+    foreach ( $rows as $row ) {
+        if ( $row['slots'] <= 0 ) continue;
+        $rate_per_slot = round( $row['umpire_pay'] / $row['slots'], 2 );
+        $rate_key      = number_format( $rate_per_slot, 2 );
+        if ( ! isset( $by_rate[ $rate_key ] ) ) {
+            $by_rate[ $rate_key ] = [ 'rate' => $rate_per_slot, 'games' => 0, 'slots' => 0, 'umpire_pay' => 0.0 ];
+        }
+        $by_rate[ $rate_key ]['games']++;
+        $by_rate[ $rate_key ]['slots']      += $row['slots'];
+        $by_rate[ $rate_key ]['umpire_pay'] += $row['umpire_pay'];
+    }
+    ksort( $by_rate );
+
     return [
-        'rows'   => $rows,
-        'totals' => $totals,
-        'rates'  => [ 'alloc' => $alloc_rate, 'admin' => $admin_rate ],
+        'rows'    => $rows,
+        'totals'  => $totals,
+        'rates'   => [ 'alloc' => $alloc_rate, 'admin' => $admin_rate ],
+        'by_rate' => $by_rate,
     ];
 }
 
@@ -661,6 +677,57 @@ function us_shortcode_allocator_invoices() {
         </table>
         </div>
 
+        <?php if ( ! empty( $breakdown['by_rate'] ) ) : ?>
+        <!-- Rate summary -->
+        <div style="margin-bottom:28px;">
+            <h4 style="margin:0 0 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;">Rate Summary</h4>
+            <table style="border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:#f0f4f8;">
+                        <th style="padding:7px 24px 7px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;white-space:nowrap;">Rate / slot</th>
+                        <th style="padding:7px 20px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Games</th>
+                        <th style="padding:7px 20px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Slots</th>
+                        <th style="padding:7px 0 7px 20px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;border-bottom:2px solid #dde3ea;">Umpire pay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $breakdown['by_rate'] as $rd ) : ?>
+                    <tr>
+                        <td style="padding:7px 24px 7px 0;border-bottom:1px solid #f0f0f0;white-space:nowrap;">$<?php echo number_format( $rd['rate'], 2 ); ?>/slot</td>
+                        <td style="padding:7px 20px;text-align:center;border-bottom:1px solid #f0f0f0;"><?php echo $rd['games']; ?></td>
+                        <td style="padding:7px 20px;text-align:center;border-bottom:1px solid #f0f0f0;"><?php echo $rd['slots']; ?></td>
+                        <td style="padding:7px 0 7px 20px;text-align:right;border-bottom:1px solid #f0f0f0;">$<?php echo number_format( $rd['umpire_pay'], 2 ); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight:700;border-top:2px solid #c5cfd9;">
+                        <td style="padding:8px 24px 4px 0;">Subtotal</td>
+                        <td style="padding:8px 20px 4px;text-align:center;"><?php echo $totals['games']; ?></td>
+                        <td style="padding:8px 20px 4px;text-align:center;"><?php echo $totals['slots']; ?></td>
+                        <td style="padding:8px 0 4px 20px;text-align:right;">$<?php echo number_format( $totals['umpire_pay'], 2 ); ?></td>
+                    </tr>
+                    <?php if ( $show_alloc ) : ?>
+                    <tr style="color:#666;font-size:12px;">
+                        <td colspan="3" style="padding:3px 24px 3px 0;text-align:right;">+ Allocator fees (<?php echo $totals['slots']; ?> slots &times; $<?php echo number_format( $rates['alloc'], 2 ); ?>)</td>
+                        <td style="padding:3px 0 3px 20px;text-align:right;">$<?php echo number_format( $totals['alloc'], 2 ); ?></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if ( $show_admin ) : ?>
+                    <tr style="color:#666;font-size:12px;">
+                        <td colspan="3" style="padding:3px 24px 3px 0;text-align:right;">+ Admin fees (<?php echo $totals['slots']; ?> slots &times; $<?php echo number_format( $rates['admin'], 2 ); ?>)</td>
+                        <td style="padding:3px 0 3px 20px;text-align:right;">$<?php echo number_format( $totals['admin'], 2 ); ?></td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr style="background:#e8f0f8;">
+                        <td colspan="3" style="padding:10px 24px 10px 0;text-align:right;font-weight:700;font-size:13px;color:#1a3a5c;">Calculated invoice total</td>
+                        <td style="padding:10px 0 10px 20px;text-align:right;font-weight:700;font-size:16px;color:#1a3a5c;">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <?php endif; ?>
+
         <?php if ( ! $contact_email ) : ?>
         <p style="margin-bottom:16px;padding:10px 14px;background:#fff8e6;border:1px solid #f0c040;border-radius:6px;font-size:13px;">
             &#9888; No contact email on file — you can still generate and download this invoice but cannot email it.
@@ -822,6 +889,22 @@ function us_shortcode_allocator_invoices() {
                     </tr>
                 </tfoot>
             </table>
+
+            <?php if ( ! empty( $breakdown['by_rate'] ) ) : ?>
+            <div style="margin:16px 0;padding:12px 16px;background:#f8f9fa;border-radius:5px;border:1px solid #eee;font-size:12px;color:#666;line-height:1.8;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#aaa;margin-bottom:6px;">Services breakdown</div>
+                <?php if ( $override_rate > 0 ) : ?>
+                    <div><?php echo intval( $totals['slots'] ); ?> umpire slots &times; $<?php echo number_format( $override_rate, 2 ); ?>/slot (flat rate) = <strong style="color:#333;">$<?php echo number_format( $invoice_total, 2 ); ?></strong></div>
+                <?php else : ?>
+                    <?php foreach ( $breakdown['by_rate'] as $rd ) : ?>
+                    <div><?php echo $rd['games']; ?> game<?php echo $rd['games'] !== 1 ? 's' : ''; ?> &times; $<?php echo number_format( $rd['rate'], 2 ); ?>/slot = $<?php echo number_format( $rd['umpire_pay'], 2 ); ?></div>
+                    <?php endforeach; ?>
+                    <?php if ( $show_alloc || $show_admin ) : ?>
+                    <div style="color:#aaa;margin-top:2px;">Includes allocator &amp; admin fees</div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
 
             <?php if ( $notes ) : ?>
             <div class="us-invoice-doc__notes">
