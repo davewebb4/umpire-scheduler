@@ -185,8 +185,9 @@ function us_ajax_send_invoice() {
     $inv_num   = sanitize_text_field( $_POST['inv_num']  ?? '' );
     $inv_date  = sanitize_text_field( $_POST['inv_date'] ?? '' );
     $period    = sanitize_text_field( $_POST['period']   ?? '' );
-    $month     = sanitize_text_field( $_POST['month']    ?? '' );
-    $notes     = sanitize_textarea_field( $_POST['notes'] ?? '' );
+    $month         = sanitize_text_field( $_POST['month']    ?? '' );
+    $notes         = sanitize_textarea_field( $_POST['notes'] ?? '' );
+    $override_rate = floatval( $_POST['override_rate'] ?? 0 );
 
     $league = get_post( $league_id );
     if ( ! $league ) wp_send_json_error( 'League not found' );
@@ -209,6 +210,10 @@ function us_ajax_send_invoice() {
         ];
     } else {
         $breakdown = us_get_invoice_breakdown( $league_id, $is_tournament ? [] : $months );
+    }
+
+    if ( $override_rate > 0 && ! empty( $breakdown['totals']['slots'] ) ) {
+        $breakdown['totals']['grand'] = round( $override_rate * $breakdown['totals']['slots'], 2 );
     }
 
     $org_name      = us_setting( 'org_name' )  ?: us_setting( 'org_short' );
@@ -335,11 +340,14 @@ add_shortcode( 'allocator_invoices', 'us_shortcode_allocator_invoices' );
 function us_shortcode_allocator_invoices() {
     if ( ! us_is_allocator() ) return '<p class="us-empty">Access denied.</p>';
 
-    $action    = sanitize_text_field( $_POST['us_inv_action'] ?? '' );
-    $league_id = absint( $_POST['us_inv_league'] ?? 0 );
-    $month     = sanitize_text_field( $_POST['us_inv_month']  ?? '' );
-    $notes     = sanitize_textarea_field( $_POST['us_inv_notes'] ?? '' );
-    $inv_num   = sanitize_text_field( $_POST['us_inv_num'] ?? '' );
+    $action        = sanitize_text_field( $_POST['us_inv_action'] ?? '' );
+    $league_id     = absint( $_POST['us_inv_league'] ?? 0 );
+    $month         = sanitize_text_field( $_POST['us_inv_month']  ?? '' );
+    $notes         = sanitize_textarea_field( $_POST['us_inv_notes'] ?? '' );
+    $inv_num       = sanitize_text_field( $_POST['us_inv_num'] ?? '' );
+    $override_rate = isset( $_POST['us_inv_override_rate'] ) && $_POST['us_inv_override_rate'] !== ''
+        ? floatval( $_POST['us_inv_override_rate'] )
+        : 0.0;
 
     $league        = $league_id ? get_post( $league_id ) : null;
     $is_tournament = $league ? get_post_meta( $league_id, 'us_is_tournament', true ) === '1' : false;
@@ -665,6 +673,16 @@ function us_shortcode_allocator_invoices() {
             <input type="hidden" name="us_inv_league" value="<?php echo $league_id; ?>">
             <input type="hidden" name="us_inv_month"  value="<?php echo esc_attr( $month ); ?>">
 
+            <div class="us-form-group" style="max-width:360px;">
+                <label for="us_inv_override_rate">Rate override per slot <span style="font-weight:400;color:#999;">(optional)</span></label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:15px;color:#555;">$</span>
+                    <input type="number" id="us_inv_override_rate" name="us_inv_override_rate" min="0" step="0.01" placeholder="e.g. 46.00" style="width:130px;" value="">
+                    <span style="font-size:13px;color:#888;">/ slot</span>
+                </div>
+                <p id="us-inv-override-preview" style="margin:8px 0 0;font-size:13px;color:#555;"></p>
+            </div>
+
             <div class="us-form-group">
                 <label for="us_inv_notes">Notes <span style="font-weight:400;color:#999;">(optional — appears on the invoice)</span></label>
                 <textarea id="us_inv_notes" name="us_inv_notes" rows="3" style="width:100%;"></textarea>
@@ -673,15 +691,37 @@ function us_shortcode_allocator_invoices() {
             <button type="submit" class="button button-primary">Generate invoice &rarr;</button>
         </form>
 
+        <script>
+        (function(){
+            var overrideInput = document.getElementById('us_inv_override_rate');
+            var preview       = document.getElementById('us-inv-override-preview');
+            var slots         = <?php echo intval( $totals['slots'] ); ?>;
+            var calcTotal     = <?php echo floatval( $totals['grand'] ); ?>;
+
+            function updatePreview() {
+                var rate = parseFloat( overrideInput.value );
+                if ( overrideInput.value === '' || isNaN( rate ) || rate <= 0 ) {
+                    preview.innerHTML = 'Invoice total: <strong>$' + calcTotal.toFixed(2) + '</strong> <span style="color:#aaa;">(calculated)</span>';
+                } else {
+                    var total = rate * slots;
+                    preview.innerHTML = 'Invoice total: <strong>$' + total.toFixed(2) + '</strong> <span style="color:#aaa;">(' + slots + ' slots &times; $' + rate.toFixed(2) + ' override)</span>';
+                }
+            }
+            overrideInput.addEventListener('input', updatePreview);
+            updatePreview();
+        })();
+        </script>
+
         <?php endif; // rows ?>
 
         <?php elseif ( $step === 3 ) :
             $months_arr = $is_tournament ? [] : array_values( array_filter( array_map( 'trim', explode( ',', $month ) ) ) );
-            $breakdown  = us_get_invoice_breakdown( $league_id, $months_arr );
-            $totals     = $breakdown['totals'];
-            $rates      = $breakdown['rates'];
-            $show_alloc = $rates['alloc'] > 0;
-            $show_admin = $rates['admin'] > 0;
+            $breakdown     = us_get_invoice_breakdown( $league_id, $months_arr );
+            $totals        = $breakdown['totals'];
+            $rates         = $breakdown['rates'];
+            $show_alloc    = $rates['alloc'] > 0;
+            $show_admin    = $rates['admin'] > 0;
+            $invoice_total = $override_rate > 0 ? round( $override_rate * $totals['slots'], 2 ) : $totals['grand'];
 
             if ( $is_tournament ) {
                 $t_start = get_post_meta( $league_id, 'us_tourney_start', true );
@@ -710,7 +750,8 @@ function us_shortcode_allocator_invoices() {
                         data-inv-date="<?php echo esc_attr( $inv_date ); ?>"
                         data-period="<?php echo esc_attr( $period ); ?>"
                         data-month="<?php echo esc_attr( $month ); ?>"
-                        data-notes="<?php echo esc_attr( $notes ); ?>">
+                        data-notes="<?php echo esc_attr( $notes ); ?>"
+                        data-override="<?php echo esc_attr( $override_rate > 0 ? $override_rate : '' ); ?>">
                     &#9993; Email to <?php echo esc_html( $contact_name ?: $contact_email ); ?>
                 </button>
             <?php endif; ?>
@@ -763,16 +804,21 @@ function us_shortcode_allocator_invoices() {
                     <tr>
                         <td>
                             Umpire services — <?php echo esc_html( $league->post_title ); ?>
-                            <div class="us-invoice-doc__line-sub"><?php echo esc_html( $period ); ?> &bull; <?php echo intval( $totals['games'] ); ?> games &bull; <?php echo intval( $totals['slots'] ); ?> umpire slots</div>
+                            <div class="us-invoice-doc__line-sub">
+                                <?php echo esc_html( $period ); ?> &bull; <?php echo intval( $totals['games'] ); ?> games &bull; <?php echo intval( $totals['slots'] ); ?> umpire slots
+                                <?php if ( $override_rate > 0 ) : ?>
+                                &bull; $<?php echo number_format( $override_rate, 2 ); ?>/slot (flat rate)
+                                <?php endif; ?>
+                            </div>
                         </td>
                         <td class="us-invoice-doc__cell-center"><?php echo intval( $totals['slots'] ); ?></td>
-                        <td class="us-invoice-doc__cell-right">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
+                        <td class="us-invoice-doc__cell-right">$<?php echo number_format( $invoice_total, 2 ); ?></td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="2" class="us-invoice-doc__total-label">Total Due</td>
-                        <td class="us-invoice-doc__total-amt">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
+                        <td class="us-invoice-doc__total-amt">$<?php echo number_format( $invoice_total, 2 ); ?></td>
                     </tr>
                 </tfoot>
             </table>
@@ -795,8 +841,9 @@ function us_shortcode_allocator_invoices() {
             <input type="hidden" name="us_inv_action" value="preview">
             <input type="hidden" name="us_inv_league" value="<?php echo $league_id; ?>">
             <input type="hidden" name="us_inv_month"  value="<?php echo esc_attr( $month ); ?>">
-            <input type="hidden" name="us_inv_notes"  value="<?php echo esc_attr( $notes ); ?>">
-            <input type="hidden" name="us_inv_num"    value="<?php echo esc_attr( $inv_num ); ?>">
+            <input type="hidden" name="us_inv_notes"         value="<?php echo esc_attr( $notes ); ?>">
+            <input type="hidden" name="us_inv_num"           value="<?php echo esc_attr( $inv_num ); ?>">
+            <input type="hidden" name="us_inv_override_rate" value="<?php echo esc_attr( $override_rate > 0 ? $override_rate : '' ); ?>">
         </form>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -832,14 +879,15 @@ function us_shortcode_allocator_invoices() {
                         method:  'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body:    new URLSearchParams({
-                            action:    'us_send_invoice',
-                            nonce:     '<?php echo wp_create_nonce( 'us_assign_nonce' ); ?>',
-                            league_id: btn.dataset.league,
-                            inv_num:   btn.dataset.invNum,
-                            inv_date:  btn.dataset.invDate,
-                            period:    btn.dataset.period,
-                            month:     btn.dataset.month,
-                            notes:     btn.dataset.notes,
+                            action:        'us_send_invoice',
+                            nonce:         '<?php echo wp_create_nonce( 'us_assign_nonce' ); ?>',
+                            league_id:     btn.dataset.league,
+                            inv_num:       btn.dataset.invNum,
+                            inv_date:      btn.dataset.invDate,
+                            period:        btn.dataset.period,
+                            month:         btn.dataset.month,
+                            notes:         btn.dataset.notes,
+                            override_rate: btn.dataset.override || '',
                         }),
                     })
                     .then( function(r) { return r.json(); } )
