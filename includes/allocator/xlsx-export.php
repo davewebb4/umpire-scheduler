@@ -63,7 +63,8 @@ function us_ajax_export_pay_xlsx() {
 
             if ( ! $game_date || $game_date < $month_start || $game_date > $month_end ) continue;
 
-            $league_id   = get_post_meta( $game_id, 'us_league_id', true );
+            $league_id = get_post_meta( $game_id, 'us_league_id', true );
+            if ( get_post_meta( $league_id, 'us_is_tournament', true ) === '1' ) continue;
             $league_name = $league_id ? get_the_title( $league_id ) : 'Unknown';
             $pay         = floatval( get_post_meta( $a->ID, 'us_pay_amount', true ) );
 
