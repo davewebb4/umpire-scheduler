@@ -51,8 +51,8 @@ function us_ajax_export_pay_xlsx() {
             'numberposts' => -1,
             'post_status' => 'publish',
             'meta_query'  => [
-                [ 'key' => 'us_umpire_id', 'value' => $umpire->ID, 'compare' => '=' ],
-                [ 'key' => 'us_status',    'value' => 'confirmed',  'compare' => '=' ],
+                [ 'key' => 'us_umpire_id', 'value' => $umpire->ID,                        'compare' => '=' ],
+                [ 'key' => 'us_status',    'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
             ],
         ] );
 
@@ -80,16 +80,17 @@ function us_ajax_export_pay_xlsx() {
         if ( empty( $league_data ) ) continue;
 
         // Check payment status for this umpire/month
-        $payment = get_posts( [
+        $payments    = get_posts( [
             'post_type'   => US_PT_PAYMENT,
-            'numberposts' => 1,
+            'numberposts' => -1,
             'post_status' => 'publish',
             'meta_query'  => [
-                [ 'key' => 'us_umpire_id', 'value' => $umpire->ID, 'compare' => '=' ],
-                [ 'key' => 'us_month',     'value' => $month,      'compare' => '=' ],
+                [ 'key' => 'payment_umpire_id', 'value' => $umpire->ID, 'compare' => '=' ],
+                [ 'key' => 'payment_month',     'value' => $month,      'compare' => '=' ],
             ],
         ] );
-        $status = $payment ? 'Paid' : 'Outstanding';
+        $amount_paid = array_sum( array_map( fn($p) => floatval( get_post_meta( $p->ID, 'payment_amount', true ) ), $payments ) );
+        $status      = empty( $payments ) ? 'Outstanding' : ( $amount_paid >= array_sum( array_column( $league_data, 'total' ) ) ? 'Paid' : 'Partial' );
 
         // ── Umpire section header ─────────────────────────────
         $xlsx->writeBlankRow( $idx );
