@@ -58,7 +58,8 @@
         setTimeout( function () {
             btn.disabled       = false;
             btn.textContent    = 'Download';
-            status.textContent = 'Download started.';
+            status.textContent = '';
+            document.getElementById( 'us-export-modal' ).style.display = 'none';
         }, 2500 );
     } );
 
