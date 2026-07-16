@@ -382,35 +382,42 @@ function us_shortcode_allocator_pay_reports() {
                         <td data-label="Games"><?php echo $month['games']; ?></td>
                         <td data-label="Earned">$<?php echo number_format( $month['earned'], 2 ); ?></td>
                         <td data-label="Status">
-                            <?php if ( $month['paid'] ) : ?>
+                            <?php if ( $month['pay_status'] === 'paid' ) : ?>
                                 <span class="us-status-confirmed">&#10003; Paid</span>
+                            <?php elseif ( $month['pay_status'] === 'partial' ) : ?>
+                                <span style="color:#b07d00;font-weight:600;">&#189; Partial</span>
+                                <div style="font-size:11px;color:#888;">$<?php echo number_format( $month['amount_paid'], 2 ); ?> of $<?php echo number_format( $month['earned'], 2 ); ?></div>
                             <?php else : ?>
                                 <span class="us-status-declined">Outstanding</span>
                             <?php endif; ?>
                         </td>
                         <td data-label="Date paid">
-                            <?php echo $month['paid'] ? esc_html( date( 'M j, Y', strtotime( $month['payment_date'] ) ) ) : '—'; ?>
+                            <?php echo $month['pay_status'] !== 'outstanding' ? esc_html( date( 'M j, Y', strtotime( $month['payment_date'] ) ) ) : '—'; ?>
                         </td>
                         <td data-label="Action">
-                            <?php if ( $month['paid'] ) : ?>
+                            <?php if ( $month['pay_status'] !== 'outstanding' ) : ?>
                                 <a href="<?php echo wp_nonce_url( add_query_arg( [
                                         'pay_tab'        => 'leagues',
                                         'us_unmark_paid' => '1',
                                         'payment_id'     => $month['payment_id'],
+                                        'umpire_id'      => $umpire->ID,
+                                        'month_key'      => $month_key,
                                         'filter_league'  => $filter_league ?: '',
                                         'filter_umpire'  => $filter_umpire ?: '',
                                     ], $base_url ), 'us_unmark_paid_' . $month['payment_id'] ); ?>"
                                    class="us-alloc-pay__remove-link"
-                                   onclick="return confirm('Remove this payment record?')">Remove</a>
-                            <?php else : ?>
+                                   onclick="return confirm('Remove all payment records for this month?')">Remove</a>
+                            <?php endif; ?>
+                            <?php if ( $month['pay_status'] !== 'paid' ) : ?>
                                 <button class="us-btn us-btn-confirm us-btn--sm us-mark-paid-btn"
                                         data-umpire="<?php echo $umpire->ID; ?>"
                                         data-month="<?php echo esc_attr( $month_key ); ?>"
-                                        data-amount="<?php echo esc_attr( $month['earned'] ); ?>"
+                                        data-earned="<?php echo esc_attr( $month['earned'] ); ?>"
+                                        data-paid-so-far="<?php echo esc_attr( $month['amount_paid'] ); ?>"
                                         data-label="<?php echo esc_attr( $umpire->post_title ); ?>"
                                         data-sublabel="<?php echo esc_attr( $month['label'] ); ?>"
                                         data-type="league">
-                                    Mark as paid
+                                    <?php echo $month['pay_status'] === 'partial' ? 'Record payment' : 'Mark as paid'; ?>
                                 </button>
                             <?php endif; ?>
                         </td>
@@ -855,21 +862,33 @@ function us_shortcode_allocator_pay_reports() {
     <!-- ── Mark as paid modal ──────────────────────────────── -->
     <div id="us-paid-modal" class="us-modal">
         <div class="us-modal__inner">
-            <h3 class="us-modal__title">Mark as paid</h3>
+            <h3 class="us-modal__title">Record payment</h3>
             <p id="us-paid-modal-label" class="us-modal__label"></p>
             <p id="us-paid-modal-sublabel" class="us-modal__sublabel"></p>
             <form method="post" action="<?php echo esc_url( $base_url ); ?>">
                 <?php wp_nonce_field( 'us_mark_paid', 'us_mark_paid_nonce' ); ?>
                 <input type="hidden" name="us_paid_umpire_id" id="us-paid-umpire-id">
                 <input type="hidden" name="us_paid_month"     id="us-paid-month">
-                <input type="hidden" name="us_paid_amount"    id="us-paid-amount">
                 <input type="hidden" name="us_paid_league"    id="us-paid-league" value="0">
                 <input type="hidden" name="us_paid_type"      id="us-paid-type"   value="league">
                 <input type="hidden" name="us_paid_tab"       id="us-paid-tab"    value="<?php echo esc_attr( $active_tab ); ?>">
                 <table class="us-modal__table">
                     <tr>
-                        <th>Amount</th>
-                        <td><strong id="us-paid-amount-display"></strong></td>
+                        <th>Total earned</th>
+                        <td><strong id="us-paid-earned-display"></strong></td>
+                    </tr>
+                    <tr id="us-paid-already-row" style="display:none;">
+                        <th>Already paid</th>
+                        <td><span id="us-paid-already-display" style="color:#0a6b0a;font-weight:600;"></span>
+                            <span id="us-paid-remaining-display" style="color:#888;font-size:12px;"></span></td>
+                    </tr>
+                    <tr>
+                        <th>Payment amount</th>
+                        <td>
+                            <input type="number" name="us_paid_amount" id="us-paid-amount"
+                                   min="0.01" step="0.01" required
+                                   style="width:130px;padding:5px 8px;font-size:14px;border:1px solid #c8d4e0;border-radius:4px;">
+                        </td>
                     </tr>
                     <tr>
                         <th>Date paid</th>
@@ -1249,6 +1268,27 @@ function us_handle_unmark_paid_front() {
     if ( ! us_is_allocator() ) return;
 
     wp_delete_post( $payment_id, true );
+
+    // Delete all sibling payments for the same umpire + month
+    $umpire_id = absint( $_GET['umpire_id'] ?? 0 );
+    $month_key = sanitize_text_field( $_GET['month_key'] ?? '' );
+    if ( $umpire_id && $month_key ) {
+        $siblings = get_posts( [
+            'post_type'   => US_PT_PAYMENT,
+            'numberposts' => -1,
+            'post_status' => 'publish',
+            'fields'      => 'ids',
+            'meta_query'  => [
+                [ 'key' => 'payment_umpire_id', 'value' => $umpire_id, 'compare' => '=', 'type' => 'NUMERIC' ],
+                [ 'key' => 'payment_month',     'value' => $month_key, 'compare' => '=' ],
+            ],
+        ] );
+        foreach ( $siblings as $sid ) {
+            if ( $sid !== $payment_id ) {
+                wp_delete_post( $sid, true );
+            }
+        }
+    }
 
     $base_url = home_url( '/' . us_setting( 'slug_allocator_pay_reports' ) . '/' );
     $tab      = sanitize_text_field( $_GET['pay_tab'] ?? 'leagues' );

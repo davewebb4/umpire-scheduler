@@ -65,12 +65,28 @@
     // ── Mark as paid modal ────────────────────────────────────
     document.querySelectorAll( '.us-mark-paid-btn' ).forEach( function ( btn ) {
         btn.addEventListener( 'click', function () {
-            document.getElementById( 'us-paid-umpire-id' ).value          = btn.dataset.umpire;
-            document.getElementById( 'us-paid-month' ).value              = btn.dataset.month;
-            document.getElementById( 'us-paid-amount' ).value             = btn.dataset.amount;
-            document.getElementById( 'us-paid-league' ).value             = btn.dataset.league || 0;
-            document.getElementById( 'us-paid-type' ).value               = btn.dataset.type   || 'league';
-            document.getElementById( 'us-paid-amount-display' ).textContent = '$' + parseFloat( btn.dataset.amount ).toFixed( 2 );
+            var earned    = parseFloat( btn.dataset.earned )    || 0;
+            var paidSoFar = parseFloat( btn.dataset.paidSoFar ) || 0;
+            var remaining = Math.max( 0, Math.round( ( earned - paidSoFar ) * 100 ) / 100 );
+
+            document.getElementById( 'us-paid-umpire-id' ).value = btn.dataset.umpire;
+            document.getElementById( 'us-paid-month' ).value     = btn.dataset.month;
+            document.getElementById( 'us-paid-league' ).value    = btn.dataset.league || 0;
+            document.getElementById( 'us-paid-type' ).value      = btn.dataset.type   || 'league';
+
+            document.getElementById( 'us-paid-earned-display' ).textContent = '$' + earned.toFixed( 2 );
+
+            var alreadyRow = document.getElementById( 'us-paid-already-row' );
+            if ( paidSoFar > 0 ) {
+                document.getElementById( 'us-paid-already-display' ).textContent   = '$' + paidSoFar.toFixed( 2 ) + ' paid';
+                document.getElementById( 'us-paid-remaining-display' ).textContent = ' — $' + remaining.toFixed( 2 ) + ' remaining';
+                alreadyRow.style.display = '';
+            } else {
+                alreadyRow.style.display = 'none';
+            }
+
+            document.getElementById( 'us-paid-amount' ).value = remaining.toFixed( 2 );
+
             document.getElementById( 'us-paid-modal-label' ).textContent    = btn.dataset.label;
             document.getElementById( 'us-paid-modal-sublabel' ).textContent = btn.dataset.sublabel || '';
             document.getElementById( 'us-paid-modal' ).style.display = 'flex';
