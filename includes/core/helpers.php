@@ -257,22 +257,29 @@ function us_get_umpire_pay_summary( $umpire_id ) {
         $month_label = date( 'F Y', strtotime( $game_date ) );
 
         if ( ! isset( $months[ $month_key ] ) ) {
-            $payment = get_posts( [
+            $payments    = get_posts( [
                 'post_type'   => US_PT_PAYMENT,
-                'numberposts' => 1,
+                'numberposts' => -1,
                 'post_status' => 'publish',
                 'meta_query'  => [
                     [ 'key' => 'payment_umpire_id', 'value' => $umpire_id, 'compare' => '=' ],
                     [ 'key' => 'payment_month',     'value' => $month_key, 'compare' => '=' ],
                 ],
             ] );
+            $amount_paid = 0.0;
+            foreach ( $payments as $p ) {
+                $amount_paid += floatval( get_post_meta( $p->ID, 'payment_amount', true ) );
+            }
 
             $months[ $month_key ] = [
-                'label'         => $month_label,
-                'games'         => 0,
-                'earned'        => 0,
-                'paid'          => ! empty( $payment ),
-                'payment_date'  => ! empty( $payment ) ? get_post_meta( $payment[0]->ID, 'payment_date', true ) : '',
+                'label'        => $month_label,
+                'games'        => 0,
+                'earned'       => 0,
+                'amount_paid'  => $amount_paid,
+                'paid'         => false,
+                'pay_status'   => 'outstanding',
+                'payment_date' => ! empty( $payments ) ? get_post_meta( $payments[0]->ID, 'payment_date', true ) : '',
+                'payment_ids'  => array_column( $payments, 'ID' ),
             ];
         }
 
@@ -280,13 +287,28 @@ function us_get_umpire_pay_summary( $umpire_id ) {
         $months[ $month_key ]['earned'] += $pay;
         $total_games++;
         $total_earned += $pay;
+    }
 
-        if ( $months[ $month_key ]['paid'] ) {
-            $total_paid += $pay;
+    // Determine pay status and accumulate totals once all earnings are known
+    foreach ( $months as &$month ) {
+        $ap = $month['amount_paid'];
+        $e  = $month['earned'];
+        if ( $ap <= 0 ) {
+            $month['pay_status'] = 'outstanding';
+            $month['paid']       = false;
+            $total_outstanding  += $e;
+        } elseif ( $ap >= $e ) {
+            $month['pay_status'] = 'paid';
+            $month['paid']       = true;
+            $total_paid         += $e;
         } else {
-            $total_outstanding += $pay;
+            $month['pay_status'] = 'partial';
+            $month['paid']       = false;
+            $total_paid         += $ap;
+            $total_outstanding  += $e - $ap;
         }
     }
+    unset( $month );
 
     krsort( $months );
 
