@@ -41,7 +41,8 @@ function us_ajax_export_pay_xlsx() {
         [ 'Status',        SimpleXlsxWriter::STYLE_HEADER ],
     ] );
 
-    $grand_total = 0;
+    $grand_total            = 0;
+    $summary_by_league_rate = [];
 
     foreach ( $umpires as $umpire ) {
         // Get all confirmed assignments for this umpire in the selected month
@@ -55,7 +56,7 @@ function us_ajax_export_pay_xlsx() {
             ],
         ] );
 
-        // Filter to selected month and group by league
+        // Filter to selected month and group by league + rate (no averaging)
         $league_data = [];
         foreach ( $assignments as $a ) {
             $game_id   = get_post_meta( $a->ID, 'us_game_id',    true );
@@ -68,11 +69,12 @@ function us_ajax_export_pay_xlsx() {
             $league_name = $league_id ? get_the_title( $league_id ) : 'Unknown';
             $pay         = floatval( get_post_meta( $a->ID, 'us_pay_amount', true ) );
 
-            if ( ! isset( $league_data[ $league_name ] ) ) {
-                $league_data[ $league_name ] = [ 'games' => 0, 'total' => 0 ];
+            $dk = $league_name . '||' . number_format( $pay, 2 );
+            if ( ! isset( $league_data[ $dk ] ) ) {
+                $league_data[ $dk ] = [ 'league' => $league_name, 'rate' => $pay, 'games' => 0, 'total' => 0.0 ];
             }
-            $league_data[ $league_name ]['games']++;
-            $league_data[ $league_name ]['total'] += $pay;
+            $league_data[ $dk ]['games']++;
+            $league_data[ $dk ]['total'] += $pay;
         }
 
         if ( empty( $league_data ) ) continue;
@@ -104,21 +106,30 @@ function us_ajax_export_pay_xlsx() {
         $umpire_total  = 0;
         $first_league  = true;
 
-        ksort( $league_data ); // alphabetical by league
+        ksort( $league_data ); // alphabetical by league, then by rate
 
-        foreach ( $league_data as $league_name => $data ) {
+        foreach ( $league_data as $data ) {
+            $league_name  = $data['league'];
             $games        = $data['games'];
+            $rate         = $data['rate'];
             $league_total = $data['total'];
-            $rate         = $games > 0 ? round( $league_total / $games, 2 ) : 0;
             $umpire_total += $league_total;
 
+            // Accumulate for end-of-report summary
+            $sk = $league_name . '||' . number_format( $rate, 2 );
+            if ( ! isset( $summary_by_league_rate[ $sk ] ) ) {
+                $summary_by_league_rate[ $sk ] = [ 'league' => $league_name, 'rate' => $rate, 'games' => 0, 'total' => 0.0 ];
+            }
+            $summary_by_league_rate[ $sk ]['games'] += $games;
+            $summary_by_league_rate[ $sk ]['total'] += $league_total;
+
             $xlsx->writeRow( $idx, [
-                [ '', SimpleXlsxWriter::STYLE_NORMAL ],
-                [ $league_name, SimpleXlsxWriter::STYLE_NORMAL ],
-                [ $games,       SimpleXlsxWriter::STYLE_NORMAL, 'n' ],
-                [ $rate,        SimpleXlsxWriter::STYLE_MONEY,  'n' ],
-                [ $league_total, SimpleXlsxWriter::STYLE_MONEY, 'n' ],
-                [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+                [ '',            SimpleXlsxWriter::STYLE_NORMAL ],
+                [ $league_name,  SimpleXlsxWriter::STYLE_NORMAL ],
+                [ $games,        SimpleXlsxWriter::STYLE_NORMAL, 'n' ],
+                [ $rate,         SimpleXlsxWriter::STYLE_MONEY,  'n' ],
+                [ $league_total, SimpleXlsxWriter::STYLE_MONEY,  'n' ],
+                [ '',            SimpleXlsxWriter::STYLE_NORMAL ],
                 [ $first_league ? $status : '', SimpleXlsxWriter::STYLE_NORMAL ],
             ] );
             $first_league = false;
@@ -149,6 +160,54 @@ function us_ajax_export_pay_xlsx() {
         [ $grand_total, SimpleXlsxWriter::STYLE_MONEY, 'n' ],
         [ '', SimpleXlsxWriter::STYLE_NORMAL ],
     ] );
+
+    // ── League & Rate Summary ─────────────────────────────────
+    if ( ! empty( $summary_by_league_rate ) ) {
+        ksort( $summary_by_league_rate );
+
+        $xlsx->writeBlankRow( $idx );
+        $xlsx->writeBlankRow( $idx );
+        $xlsx->writeRow( $idx, [
+            [ 'League & Rate Summary — ' . $month_label, SimpleXlsxWriter::STYLE_BOLD ],
+        ] );
+        $xlsx->writeBlankRow( $idx );
+        $xlsx->writeRow( $idx, [
+            [ 'League',  SimpleXlsxWriter::STYLE_HEADER ],
+            [ 'Rate',    SimpleXlsxWriter::STYLE_HEADER ],
+            [ 'Games',   SimpleXlsxWriter::STYLE_HEADER ],
+            [ 'Total',   SimpleXlsxWriter::STYLE_HEADER ],
+            [ '',        SimpleXlsxWriter::STYLE_HEADER ],
+            [ '',        SimpleXlsxWriter::STYLE_HEADER ],
+            [ '',        SimpleXlsxWriter::STYLE_HEADER ],
+        ] );
+
+        $sum_games = 0;
+        $sum_total = 0.0;
+
+        foreach ( $summary_by_league_rate as $sd ) {
+            $xlsx->writeRow( $idx, [
+                [ $sd['league'], SimpleXlsxWriter::STYLE_NORMAL ],
+                [ $sd['rate'],   SimpleXlsxWriter::STYLE_MONEY,  'n' ],
+                [ $sd['games'],  SimpleXlsxWriter::STYLE_NORMAL, 'n' ],
+                [ $sd['total'],  SimpleXlsxWriter::STYLE_MONEY,  'n' ],
+                [ '',            SimpleXlsxWriter::STYLE_NORMAL ],
+                [ '',            SimpleXlsxWriter::STYLE_NORMAL ],
+                [ '',            SimpleXlsxWriter::STYLE_NORMAL ],
+            ] );
+            $sum_games += $sd['games'];
+            $sum_total += $sd['total'];
+        }
+
+        $xlsx->writeRow( $idx, [
+            [ 'Total', SimpleXlsxWriter::STYLE_TOTAL ],
+            [ '',      SimpleXlsxWriter::STYLE_TOTAL ],
+            [ $sum_games, 6, 'n' ],
+            [ $sum_total, 6, 'n' ],
+            [ '',      SimpleXlsxWriter::STYLE_TOTAL ],
+            [ '',      SimpleXlsxWriter::STYLE_TOTAL ],
+            [ '',      SimpleXlsxWriter::STYLE_TOTAL ],
+        ] );
+    }
 
     // ── Sheet 2: Admin Fees ───────────────────────────────────────
     $all_leagues     = get_posts( [ 'post_type' => US_PT_LEAGUE, 'numberposts' => -1, 'orderby' => 'title', 'order' => 'ASC', 'post_status' => 'publish' ] );
