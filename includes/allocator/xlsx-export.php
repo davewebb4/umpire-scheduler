@@ -42,6 +42,8 @@ function us_ajax_export_pay_xlsx() {
     ] );
 
     $grand_total            = 0;
+    $grand_paid             = 0;
+    $grand_outstanding      = 0;
     $summary_by_league_rate = [];
 
     foreach ( $umpires as $umpire ) {
@@ -80,6 +82,8 @@ function us_ajax_export_pay_xlsx() {
         if ( empty( $league_data ) ) continue;
 
         // Check payment status for this umpire/month
+        $umpire_earned = array_sum( array_column( $league_data, 'total' ) );
+
         $payments    = get_posts( [
             'post_type'   => US_PT_PAYMENT,
             'numberposts' => -1,
@@ -90,7 +94,15 @@ function us_ajax_export_pay_xlsx() {
             ],
         ] );
         $amount_paid = array_sum( array_map( fn($p) => floatval( get_post_meta( $p->ID, 'payment_amount', true ) ), $payments ) );
-        $status      = empty( $payments ) ? 'Outstanding' : ( $amount_paid >= array_sum( array_column( $league_data, 'total' ) ) ? 'Paid' : 'Partial' );
+
+        if ( empty( $payments ) || $amount_paid <= 0 ) {
+            $status = 'Outstanding — $' . number_format( $umpire_earned, 2 ) . ' owed';
+        } elseif ( $amount_paid >= $umpire_earned ) {
+            $status = 'Paid in full — $' . number_format( $amount_paid, 2 );
+        } else {
+            $remaining = round( $umpire_earned - $amount_paid, 2 );
+            $status    = '$' . number_format( $amount_paid, 2 ) . ' paid / $' . number_format( $remaining, 2 ) . ' outstanding';
+        }
 
         // ── Umpire section header ─────────────────────────────
         $xlsx->writeBlankRow( $idx );
@@ -147,18 +159,38 @@ function us_ajax_export_pay_xlsx() {
             [ '',      SimpleXlsxWriter::STYLE_TOTAL ],
         ] );
 
-        $grand_total += $umpire_total;
+        $grand_total       += $umpire_total;
+        $grand_paid        += min( $amount_paid, $umpire_total );
+        $grand_outstanding += max( 0, $umpire_total - $amount_paid );
     }
 
     // ── Grand total ───────────────────────────────────────────
     $xlsx->writeBlankRow( $idx );
     $xlsx->writeRow( $idx, [
-        [ 'GRAND TOTAL', SimpleXlsxWriter::STYLE_BOLD ],
+        [ 'Total Earned', SimpleXlsxWriter::STYLE_BOLD ],
         [ '', SimpleXlsxWriter::STYLE_NORMAL ],
         [ '', SimpleXlsxWriter::STYLE_NORMAL ],
         [ '', SimpleXlsxWriter::STYLE_NORMAL ],
         [ '', SimpleXlsxWriter::STYLE_NORMAL ],
         [ $grand_total, SimpleXlsxWriter::STYLE_MONEY, 'n' ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+    ] );
+    $xlsx->writeRow( $idx, [
+        [ 'Total Paid', SimpleXlsxWriter::STYLE_BOLD ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ $grand_paid, SimpleXlsxWriter::STYLE_MONEY, 'n' ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+    ] );
+    $xlsx->writeRow( $idx, [
+        [ 'Total Outstanding', SimpleXlsxWriter::STYLE_BOLD ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ '', SimpleXlsxWriter::STYLE_NORMAL ],
+        [ $grand_outstanding, SimpleXlsxWriter::STYLE_MONEY, 'n' ],
         [ '', SimpleXlsxWriter::STYLE_NORMAL ],
     ] );
 
