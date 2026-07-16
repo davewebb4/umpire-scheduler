@@ -445,6 +445,53 @@ function us_shortcode_allocator_pay_reports() {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <?php
+            $rate_summary = [];
+            foreach ( $summary['months'] as $mo ) {
+                if ( empty( $mo['game_rows'] ) ) continue;
+                foreach ( $mo['game_rows'] as $gr ) {
+                    $rk = number_format( floatval( $gr['pay'] ), 2 );
+                    if ( ! isset( $rate_summary[ $rk ] ) ) {
+                        $rate_summary[ $rk ] = [ 'rate' => floatval( $gr['pay'] ), 'games' => 0, 'total' => 0.0 ];
+                    }
+                    $rate_summary[ $rk ]['games']++;
+                    $rate_summary[ $rk ]['total'] += floatval( $gr['pay'] );
+                }
+            }
+            ksort( $rate_summary );
+            ?>
+            <?php if ( ! empty( $rate_summary ) ) : ?>
+            <div style="padding:12px 16px 14px;border-top:1px solid #eee;background:#f8fafc;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:8px;">Season breakdown by rate</div>
+                <table style="border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr>
+                            <th style="padding:4px 24px 4px 0;text-align:left;font-size:11px;color:#aaa;font-weight:600;">Rate</th>
+                            <th style="padding:4px 20px;text-align:center;font-size:11px;color:#aaa;font-weight:600;">Games</th>
+                            <th style="padding:4px 0 4px 20px;text-align:right;font-size:11px;color:#aaa;font-weight:600;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $rate_summary as $rd ) : ?>
+                        <tr>
+                            <td style="padding:4px 24px 4px 0;white-space:nowrap;">$<?php echo number_format( $rd['rate'], 2 ); ?>/game</td>
+                            <td style="padding:4px 20px;text-align:center;"><?php echo $rd['games']; ?></td>
+                            <td style="padding:4px 0 4px 20px;text-align:right;">$<?php echo number_format( $rd['total'], 2 ); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight:700;border-top:1px solid #dde3ea;">
+                            <td style="padding:7px 24px 4px 0;">Season total</td>
+                            <td style="padding:7px 20px 4px;text-align:center;"><?php echo $summary['total_games']; ?></td>
+                            <td style="padding:7px 0 4px 20px;text-align:right;">$<?php echo number_format( $summary['total_outstanding'] + $summary['total_paid'], 2 ); ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <?php endif; ?>
+
         </div>
         <?php endforeach; ?>
         <?php endif; ?>
