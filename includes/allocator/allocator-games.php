@@ -426,6 +426,27 @@ function us_render_dh_mgmt_card( $games, $today, $selected_league_id, $all_umpir
             $base_name       = $base_umpire_id  ? get_the_title( $base_umpire_id )  : null;
             $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date, $g_field ) : false;
             $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date, $g_field ) : false;
+
+            // For postponed games, fetch names from postponed-paid assignments
+            if ( $is_postponed ) {
+                $paid_assigns = get_posts( [
+                    'post_type'   => US_PT_ASSIGNMENT,
+                    'numberposts' => -1,
+                    'post_status' => 'publish',
+                    'meta_query'  => [
+                        [ 'key' => 'us_game_id', 'value' => $game->ID,        'compare' => '=' ],
+                        [ 'key' => 'us_status',  'value' => 'postponed-paid', 'compare' => '=' ],
+                    ],
+                ] );
+                foreach ( $paid_assigns as $pa ) {
+                    $pos   = get_post_meta( $pa->ID, 'us_position',   true );
+                    $uid   = (int) get_post_meta( $pa->ID, 'us_umpire_id', true );
+                    $pname = $uid ? get_the_title( $uid ) : null;
+                    if ( $pos === 'plate' && $pname && ! $plate_name ) $plate_name = $pname;
+                    if ( $pos === 'base'  && $pname && ! $base_name  ) $base_name  = $pname;
+                }
+            }
+
             $plate_reqs      = us_get_slot_requests( $game->ID, 'plate' );
             $base_reqs       = us_get_slot_requests( $game->ID, 'base' );
 
@@ -559,6 +580,26 @@ function us_render_mgmt_game_card( $game, $today, $selected_league_id, $all_umpi
     $base_name       = $base_umpire_id  ? get_the_title( $base_umpire_id )  : null;
     $plate_conflict  = $plate_umpire_id ? us_umpire_has_date_conflict( $plate_umpire_id, $game->ID, $date, $field ) : false;
     $base_conflict   = $base_umpire_id  ? us_umpire_has_date_conflict( $base_umpire_id,  $game->ID, $date, $field ) : false;
+
+    // For postponed games, fetch names from postponed-paid assignments
+    if ( $is_postponed ) {
+        $paid_assigns = get_posts( [
+            'post_type'   => US_PT_ASSIGNMENT,
+            'numberposts' => -1,
+            'post_status' => 'publish',
+            'meta_query'  => [
+                [ 'key' => 'us_game_id', 'value' => $game->ID,        'compare' => '=' ],
+                [ 'key' => 'us_status',  'value' => 'postponed-paid', 'compare' => '=' ],
+            ],
+        ] );
+        foreach ( $paid_assigns as $pa ) {
+            $pos   = get_post_meta( $pa->ID, 'us_position',   true );
+            $uid   = (int) get_post_meta( $pa->ID, 'us_umpire_id', true );
+            $pname = $uid ? get_the_title( $uid ) : null;
+            if ( $pos === 'plate' && $pname && ! $plate_name ) $plate_name = $pname;
+            if ( $pos === 'base'  && $pname && ! $base_name  ) $base_name  = $pname;
+        }
+    }
 
     $plate_reqs = us_get_slot_requests( $game->ID, 'plate' );
     $base_reqs  = us_get_slot_requests( $game->ID, 'base' );
@@ -1059,7 +1100,7 @@ function us_allocator_games_umpire_cell( $game_id, $position, $name, $assignment
 
     if ( $is_postponed ) {
         echo $name
-            ? '<span class="us-status-confirmed">&#10003; ' . esc_html( $name ) . '</span>'
+            ? '<span class="us-alloc__postponed-paid-name">&#10003; ' . esc_html( $name ) . ' <span class="us-alloc__paid-badge">paid</span></span>'
             : '<span class="us-alloc__slot-na">—</span>';
         return ob_get_clean();
     }

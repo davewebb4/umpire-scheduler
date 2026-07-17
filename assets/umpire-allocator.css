@@ -46,6 +46,8 @@
 .us-alloc__all-assigned        { color: #00a32a; font-weight: 600; }
 .us-alloc__postpone-confirm-btn { background: #f59e0b; color: #fff; border: none; }
 .us-alloc__status--postponed   { color: #999; font-weight: 600; }
+.us-alloc__postponed-paid-name { color: #00a32a; font-weight: 600; }
+.us-alloc__paid-badge          { display: inline-block; font-size: 10px; font-weight: 600; background: #00a32a; color: #fff; border-radius: 3px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: .3px; }
 
 /* ── Allocator requests — card layout ─────────────────────── */
 .us-alloc-requests             { margin-bottom: 32px; }
