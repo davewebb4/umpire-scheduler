@@ -31,8 +31,8 @@ function us_ajax_invoice_get_months() {
             'post_status' => 'publish',
             'fields'      => 'ids',
             'meta_query'  => [
-                [ 'key' => 'us_game_id', 'value' => $game_id,    'compare' => '=' ],
-                [ 'key' => 'us_status',  'value' => 'confirmed', 'compare' => '=' ],
+                [ 'key' => 'us_game_id', 'value' => $game_id,                          'compare' => '=' ],
+                [ 'key' => 'us_status',  'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
             ],
         ] );
         if ( ! $confirmed ) continue;
@@ -130,8 +130,8 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
             'post_status' => 'publish',
             'fields'      => 'ids',
             'meta_query'  => [
-                [ 'key' => 'us_game_id', 'value' => $game->ID,   'compare' => '=' ],
-                [ 'key' => 'us_status',  'value' => 'confirmed', 'compare' => '=' ],
+                [ 'key' => 'us_game_id', 'value' => $game->ID,                         'compare' => '=' ],
+                [ 'key' => 'us_status',  'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
             ],
         ] );
         if ( ! $assignments ) continue;
@@ -147,15 +147,16 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
         $game_total = $umpire_pay + $game_alloc + $game_admin;
 
         $rows[] = [
-            'date'       => $game_date,
-            'month_key'  => $month_key,
-            'title'      => $game->post_title,
-            'slots'      => $slot_count,
-            'is_dh'      => get_post_meta( $game->ID, 'us_double_header', true ) === '1',
-            'umpire_pay' => $umpire_pay,
-            'alloc'      => $game_alloc,
-            'admin'      => $game_admin,
-            'total'      => $game_total,
+            'date'         => $game_date,
+            'month_key'    => $month_key,
+            'title'        => $game->post_title,
+            'slots'        => $slot_count,
+            'is_dh'        => get_post_meta( $game->ID, 'us_double_header', true ) === '1',
+            'is_postponed' => get_post_meta( $game->ID, 'us_game_status', true ) === 'postponed',
+            'umpire_pay'   => $umpire_pay,
+            'alloc'        => $game_alloc,
+            'admin'        => $game_admin,
+            'total'        => $game_total,
         ];
 
         $totals['games']++;
@@ -633,6 +634,9 @@ function us_shortcode_allocator_invoices() {
                         <?php echo esc_html( $row['title'] ); ?>
                         <?php if ( $row['is_dh'] ) : ?>
                             <span style="display:inline-block;background:#e8f4fd;color:#1a6396;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.5px;">DH</span>
+                        <?php endif; ?>
+                        <?php if ( $row['is_postponed'] ) : ?>
+                            <span style="display:inline-block;background:#fff3e0;color:#e65100;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.5px;">Postponed</span>
                         <?php endif; ?>
                     </td>
                     <td style="text-align:center;"><?php echo intval( $row['slots'] ); ?></td>
