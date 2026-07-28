@@ -106,7 +106,8 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
         'meta_query'  => $meta_query,
     ] );
 
-    $rows   = [];
+    $rows          = [];
+    $unbilled_rows = [];
     $totals = [
         'games'      => 0,
         'slots'      => 0,
@@ -134,7 +135,19 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
                 [ 'key' => 'us_status',  'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
             ],
         ] );
-        if ( ! $assignments ) continue;
+        if ( ! $assignments ) {
+            $game_status = get_post_meta( $game->ID, 'us_game_status', true );
+            if ( $game_status !== 'cancelled' ) {
+                $unbilled_rows[] = [
+                    'date'         => $game_date,
+                    'month_key'    => $month_key,
+                    'title'        => $game->post_title,
+                    'is_dh'        => get_post_meta( $game->ID, 'us_double_header', true ) === '1',
+                    'is_postponed' => $game_status === 'postponed',
+                ];
+            }
+            continue;
+        }
 
         $slot_count = count( $assignments );
         $umpire_pay = 0.0;
@@ -167,7 +180,8 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
         $totals['grand']      += $game_total;
     }
 
-    usort( $rows, fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
+    usort( $rows,          fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
+    usort( $unbilled_rows, fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
 
     // Group rows by per-slot umpire pay rate for summary display
     $by_rate = [];
@@ -185,10 +199,11 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
     ksort( $by_rate );
 
     return [
-        'rows'    => $rows,
-        'totals'  => $totals,
-        'rates'   => [ 'alloc' => $alloc_rate, 'admin' => $admin_rate ],
-        'by_rate' => $by_rate,
+        'rows'     => $rows,
+        'unbilled' => $unbilled_rows,
+        'totals'   => $totals,
+        'rates'    => [ 'alloc' => $alloc_rate, 'admin' => $admin_rate ],
+        'by_rate'  => $by_rate,
     ];
 }
 
@@ -730,6 +745,72 @@ function us_shortcode_allocator_invoices() {
                 </tfoot>
             </table>
         </div>
+        <?php endif; ?>
+
+        <?php if ( ! empty( $breakdown['unbilled'] ) ) :
+            $unbilled_unassigned = array_filter( $breakdown['unbilled'], fn( $r ) => ! $r['is_postponed'] );
+            $unbilled_postponed  = array_filter( $breakdown['unbilled'], fn( $r ) =>   $r['is_postponed'] );
+            $unbilled_by_month   = [];
+            foreach ( $breakdown['unbilled'] as $ur ) {
+                $unbilled_by_month[ $ur['month_key'] ][] = $ur;
+            }
+            ksort( $unbilled_by_month );
+        ?>
+        <!-- Not-billed informational section -->
+        <details style="margin-bottom:28px;border:1px solid #dde3ea;border-radius:6px;overflow:hidden;" open>
+            <summary style="cursor:pointer;padding:12px 16px;background:#f8fafc;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:10px;">
+                <span>Games Not Included in This Invoice</span>
+                <?php if ( count( $unbilled_unassigned ) ) : ?>
+                <span style="background:#e3eaf2;color:#555;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;"><?php echo count( $unbilled_unassigned ); ?> unassigned</span>
+                <?php endif; ?>
+                <?php if ( count( $unbilled_postponed ) ) : ?>
+                <span style="background:#fff3e0;color:#e65100;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;"><?php echo count( $unbilled_postponed ); ?> postponed</span>
+                <?php endif; ?>
+            </summary>
+            <div style="padding:14px 16px;">
+                <p style="margin:0 0 14px;font-size:13px;color:#666;">The following games are shown for reference only and are <strong>not included</strong> in the billing above. No charges apply.</p>
+                <div style="overflow-x:auto;">
+                <table class="us-table" style="width:100%;min-width:400px;font-size:13px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Game</th>
+                            <th style="text-align:center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $unbilled_by_month as $umk => $urows ) :
+                            $umonth_label = date( 'F Y', strtotime( $umk . '-01' ) );
+                        ?>
+                        <?php if ( count( $unbilled_by_month ) > 1 ) : ?>
+                        <tr>
+                            <td colspan="3" style="background:#f0f4f8;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;padding:6px 12px;"><?php echo esc_html( $umonth_label ); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php foreach ( $urows as $ur ) : ?>
+                        <tr>
+                            <td style="white-space:nowrap;color:#888;"><?php echo esc_html( date( 'M j', strtotime( $ur['date'] ) ) ); ?></td>
+                            <td>
+                                <?php echo esc_html( $ur['title'] ); ?>
+                                <?php if ( $ur['is_dh'] ) : ?>
+                                <span style="display:inline-block;background:#e8f4fd;color:#1a6396;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.5px;">DH</span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align:center;">
+                                <?php if ( $ur['is_postponed'] ) : ?>
+                                <span style="display:inline-block;background:#fff3e0;color:#e65100;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">Postponed</span>
+                                <?php else : ?>
+                                <span style="display:inline-block;background:#f0f0f0;color:#888;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">No umpires</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </details>
         <?php endif; ?>
 
         <?php if ( ! $contact_email ) : ?>
