@@ -333,6 +333,25 @@ function us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdow
     </td>
   </tr>
 
+  <?php if ( ! empty( $breakdown['unbilled'] ) ) :
+      $ub_unassigned = count( array_filter( $breakdown['unbilled'], fn( $r ) => ! $r['is_postponed'] ) );
+      $ub_postponed  = count( array_filter( $breakdown['unbilled'], fn( $r ) =>   $r['is_postponed'] ) );
+      $ub_parts      = array_filter( [
+          $ub_unassigned ? $ub_unassigned . ' unassigned' : '',
+          $ub_postponed  ? $ub_postponed  . ' postponed (not paid)' : '',
+      ] );
+  ?>
+  <tr><td colspan="2" height="12"></td></tr>
+  <tr>
+    <td colspan="2" style="padding:0 28px;">
+      <p style="margin:0;font-size:12px;color:#aaa;padding:10px 14px;background:#f8f9fa;border:1px solid #eee;">
+        <strong style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Not included in this invoice</strong>
+        <?php echo esc_html( implode( ' · ', $ub_parts ) ); ?> — no charge
+      </p>
+    </td>
+  </tr>
+  <?php endif; ?>
+
   <?php if ( $notes ) : ?>
   <tr><td colspan="2" height="16"></td></tr>
   <tr>
@@ -988,6 +1007,20 @@ function us_shortcode_allocator_invoices() {
                     <div style="color:#aaa;margin-top:2px;">Includes allocator &amp; admin fees</div>
                     <?php endif; ?>
                 <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
+            <?php if ( ! empty( $breakdown['unbilled'] ) ) :
+                $ub_unassigned = count( array_filter( $breakdown['unbilled'], fn( $r ) => ! $r['is_postponed'] ) );
+                $ub_postponed  = count( array_filter( $breakdown['unbilled'], fn( $r ) =>   $r['is_postponed'] ) );
+                $ub_parts      = array_filter( [
+                    $ub_unassigned ? $ub_unassigned . ' unassigned' : '',
+                    $ub_postponed  ? $ub_postponed  . ' postponed (not paid)' : '',
+                ] );
+            ?>
+            <div style="margin:12px 0;padding:10px 14px;background:#f8f9fa;border:1px solid #eee;border-radius:4px;font-size:12px;color:#888;line-height:1.6;">
+                <span style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#bbb;display:block;margin-bottom:3px;">Not included in this invoice</span>
+                <?php echo esc_html( implode( ' · ', $ub_parts ) ); ?> — no charge
             </div>
             <?php endif; ?>
 
