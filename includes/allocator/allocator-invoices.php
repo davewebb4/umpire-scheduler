@@ -436,7 +436,7 @@ function us_shortcode_allocator_invoices() {
         'numberposts' => -1,
         'orderby'     => 'title',
         'order'       => 'ASC',
-        'post_status' => 'publish',
+        'post_status' => 'any',
         'meta_query'  => [ [ 'key' => 'us_is_archived', 'value' => '1', 'compare' => '!=' ] ],
     ] );
 
