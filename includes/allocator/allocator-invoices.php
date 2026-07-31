@@ -1065,12 +1065,24 @@ function us_shortcode_allocator_invoices() {
                 <?php if ( $override_rate > 0 ) : ?>
                     <div><?php echo intval( $totals['slots'] ); ?> umpire slots &times; $<?php echo number_format( $override_rate, 2 ); ?>/slot (flat rate) = <strong style="color:#333;">$<?php echo number_format( $invoice_total, 2 ); ?></strong></div>
                 <?php else : ?>
-                    <?php foreach ( $breakdown['by_rate'] as $rd ) : ?>
-                    <div><?php echo $rd['games']; ?> game<?php echo $rd['games'] !== 1 ? 's' : ''; ?> &times; $<?php echo number_format( $rd['rate'], 2 ); ?>/slot = $<?php echo number_format( $rd['umpire_pay'], 2 ); ?></div>
+                    <?php foreach ( $breakdown['by_rate'] as $rd ) :
+                        $true_rate  = $rd['rate'] + $rates['alloc'] + $rates['admin'];
+                        $true_total = $rd['slots'] * $true_rate;
+                        $fee_parts  = [];
+                        $fee_parts[] = '$' . number_format( $rd['rate'], 2 ) . ' umpire';
+                        if ( $rates['alloc'] > 0 ) $fee_parts[] = '$' . number_format( $rates['alloc'], 2 ) . ' alloc';
+                        if ( $rates['admin'] > 0 ) $fee_parts[] = '$' . number_format( $rates['admin'], 2 ) . ' admin';
+                    ?>
+                    <div>
+                        <?php echo $rd['games']; ?> game<?php echo $rd['games'] !== 1 ? 's' : ''; ?>,
+                        <?php echo $rd['slots']; ?> slot<?php echo $rd['slots'] !== 1 ? 's' : ''; ?>
+                        &times; $<?php echo number_format( $true_rate, 2 ); ?>/slot
+                        <?php if ( $show_alloc || $show_admin ) : ?>
+                        <span style="color:#aaa;">(<?php echo implode( ' + ', $fee_parts ); ?>)</span>
+                        <?php endif; ?>
+                        = <strong style="color:#333;">$<?php echo number_format( $true_total, 2 ); ?></strong>
+                    </div>
                     <?php endforeach; ?>
-                    <?php if ( $show_alloc || $show_admin ) : ?>
-                    <div style="color:#aaa;margin-top:2px;">Includes allocator &amp; admin fees</div>
-                    <?php endif; ?>
                 <?php endif; ?>
             </div>
             <?php endif; ?>
