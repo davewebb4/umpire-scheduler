@@ -189,11 +189,12 @@ function us_league_games_page( $league ) {
             ] );
             $asn_by_game = [];
             foreach ( $page_assignments as $asn ) {
-                $gid = get_post_meta( $asn->ID, 'us_game_id',   true );
-                $pos = get_post_meta( $asn->ID, 'us_position',  true );
-                $uid = get_post_meta( $asn->ID, 'us_umpire_id', true );
+                $gid    = get_post_meta( $asn->ID, 'us_game_id',   true );
+                $pos    = get_post_meta( $asn->ID, 'us_position',  true );
+                $uid    = get_post_meta( $asn->ID, 'us_umpire_id', true );
+                $status = get_post_meta( $asn->ID, 'us_status',    true );
                 if ( $gid && $pos ) {
-                    $asn_by_game[ $gid ][ $pos ] = $uid;
+                    $asn_by_game[ $gid ][ $pos ] = [ 'uid' => $uid, 'status' => $status ];
                 }
             }
         ?>
@@ -220,11 +221,14 @@ function us_league_games_page( $league ) {
                     $away      = get_post_meta( $game->ID, 'us_away_team',    true );
                     $field     = get_post_meta( $game->ID, 'us_field',        true );
                     $is_dh     = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
-                    $g_status   = get_post_meta( $game->ID, 'us_game_status', true );
-                    $plate_uid  = $asn_by_game[ $game->ID ]['plate'] ?? 0;
-                    $base_uid   = $asn_by_game[ $game->ID ]['base']  ?? 0;
-                    $plate_name = $plate_uid ? ( $umpire_name_map[ $plate_uid ] ?? get_the_title( $plate_uid ) ) : '';
-                    $base_name  = $base_uid  ? ( $umpire_name_map[ $base_uid ]  ?? get_the_title( $base_uid ) )  : '';
+                    $g_status        = get_post_meta( $game->ID, 'us_game_status', true );
+                    $plate_asn       = $asn_by_game[ $game->ID ]['plate'] ?? null;
+                    $base_asn        = $asn_by_game[ $game->ID ]['base']  ?? null;
+                    $plate_uid       = $plate_asn['uid']    ?? 0;
+                    $plate_paid      = ( $plate_asn['status'] ?? '' ) === 'postponed-paid';
+                    $base_uid        = $base_asn['uid']     ?? 0;
+                    $plate_name      = $plate_uid ? ( $umpire_name_map[ $plate_uid ] ?? get_the_title( $plate_uid ) ) : '';
+                    $base_name       = $base_uid  ? ( $umpire_name_map[ $base_uid ]  ?? get_the_title( $base_uid ) )  : '';
                 ?>
                 <tr>
                     <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
@@ -242,6 +246,9 @@ function us_league_games_page( $league ) {
                     <td style="font-size:13px;">
                         <?php if ( $plate_name ) : ?>
                             <?php echo esc_html( $plate_name ); ?>
+                            <?php if ( $plate_paid ) : ?>
+                                <span style="display:inline-block;background:#fff3e0;color:#e65100;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.3px;">Postponed · Paid</span>
+                            <?php endif; ?>
                         <?php elseif ( $g_status === 'cancelled' ) : ?>
                             <span style="color:#b32d2e;font-size:12px;">Cancelled</span>
                         <?php elseif ( $g_status === 'postponed' ) : ?>
