@@ -149,46 +149,56 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
             continue;
         }
 
-        // Deduplicate by position — only one slot per position (plate / base).
-        // Duplicate confirmed records can exist after reassignments and would
-        // otherwise inflate the slot count and umpire pay totals.
-        $by_position = [];
+        // Separate by status, deduplicating within each group by position.
+        // Duplicate confirmed records from reassignments are collapsed to one
+        // per position. But postponed-paid + confirmed on the same game are
+        // kept as separate billing events so a rescheduled postponed game is
+        // billed twice and counts as two games.
+        $is_dh       = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
+        $groups      = [ 'postponed-paid' => [], 'confirmed' => [] ];
         foreach ( $assignments as $asn_id ) {
-            $pos = get_post_meta( $asn_id, 'us_position', true ) ?: 'plate';
-            if ( ! isset( $by_position[ $pos ] ) ) {
-                $by_position[ $pos ] = $asn_id;
+            $status = get_post_meta( $asn_id, 'us_status',   true );
+            $pos    = get_post_meta( $asn_id, 'us_position', true ) ?: 'plate';
+            $bucket = ( $status === 'postponed-paid' ) ? 'postponed-paid' : 'confirmed';
+            if ( ! isset( $groups[ $bucket ][ $pos ] ) ) {
+                $groups[ $bucket ][ $pos ] = $asn_id;
             }
         }
-        $slot_count = count( $by_position );
-        $umpire_pay = 0.0;
-        foreach ( $by_position as $asn_id ) {
-            $umpire_pay += floatval( get_post_meta( $asn_id, 'us_pay_amount', true ) );
-        }
 
-        $game_alloc = $alloc_rate * $slot_count;
-        $game_admin = $admin_rate * $slot_count;
-        $game_total = $umpire_pay + $game_alloc + $game_admin;
+        foreach ( $groups as $bucket => $by_position ) {
+            if ( empty( $by_position ) ) continue;
 
-        $rows[] = [
-            'date'         => $game_date,
-            'month_key'    => $month_key,
-            'title'        => $game->post_title,
-            'slots'        => $slot_count,
-            'is_dh'        => get_post_meta( $game->ID, 'us_double_header', true ) === '1',
-            'is_postponed' => get_post_meta( $game->ID, 'us_game_status', true ) === 'postponed',
-            'umpire_pay'   => $umpire_pay,
-            'alloc'        => $game_alloc,
-            'admin'        => $game_admin,
-            'total'        => $game_total,
-        ];
+            $slot_count = count( $by_position );
+            $umpire_pay = 0.0;
+            foreach ( $by_position as $asn_id ) {
+                $umpire_pay += floatval( get_post_meta( $asn_id, 'us_pay_amount', true ) );
+            }
 
-        $totals['games']++;
-        $totals['slots']      += $slot_count;
-        $totals['umpire_pay'] += $umpire_pay;
-        $totals['alloc']      += $game_alloc;
-        $totals['admin']      += $game_admin;
-        $totals['grand']      += $game_total;
-    }
+            $game_alloc = $alloc_rate * $slot_count;
+            $game_admin = $admin_rate * $slot_count;
+            $game_total = $umpire_pay + $game_alloc + $game_admin;
+
+            $rows[] = [
+                'date'         => $game_date,
+                'month_key'    => $month_key,
+                'title'        => $game->post_title,
+                'slots'        => $slot_count,
+                'is_dh'        => $is_dh,
+                'is_postponed' => $bucket === 'postponed-paid',
+                'umpire_pay'   => $umpire_pay,
+                'alloc'        => $game_alloc,
+                'admin'        => $game_admin,
+                'total'        => $game_total,
+            ];
+
+            $totals['games']++;
+            $totals['slots']      += $slot_count;
+            $totals['umpire_pay'] += $umpire_pay;
+            $totals['alloc']      += $game_alloc;
+            $totals['admin']      += $game_admin;
+            $totals['grand']      += $game_total;
+        } // end foreach $groups
+    } // end foreach $games
 
     usort( $rows,          fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
     usort( $unbilled_rows, fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
