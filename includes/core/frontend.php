@@ -292,10 +292,16 @@ function us_inject_dashboard_chrome( $content ) {
         'order'       => 'ASC',
         'post_status' => 'publish',
         'meta_query'  => [
+            'relation' => 'AND',
             [
                 'key'     => 'us_rules',
                 'value'   => '',
                 'compare' => '!=',
+            ],
+            [
+                'relation' => 'OR',
+                [ 'key' => 'us_is_hidden', 'compare' => 'NOT EXISTS' ],
+                [ 'key' => 'us_is_hidden', 'value' => '1', 'compare' => '!=' ],
             ],
         ],
     ] );
@@ -313,7 +319,7 @@ function us_inject_dashboard_chrome( $content ) {
         ];
     }
 
-    $has_tournaments = ! empty( us_get_active_leagues( true ) );
+    $has_tournaments = ! empty( us_get_active_leagues( true, true ) );
 
     if ( $has_tournaments ) {
         $public_items[] = [

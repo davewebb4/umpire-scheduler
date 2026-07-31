@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_shortcode( 'league_schedule', 'us_shortcode_league_schedule' );
 function us_shortcode_league_schedule() {
 
-    $leagues = array_values( us_get_active_leagues( false ) );
+    $leagues = array_values( us_get_active_leagues( false, true ) );
 
     if ( empty( $leagues ) ) {
         return '<p class="us-empty">No leagues found.</p>';

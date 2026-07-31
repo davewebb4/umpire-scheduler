@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_shortcode( 'tournament_schedule', 'us_shortcode_tournament_schedule' );
 function us_shortcode_tournament_schedule() {
 
-    $tournaments = array_values( us_get_active_leagues( true ) );
+    $tournaments = array_values( us_get_active_leagues( true, true ) );
 
     if ( empty( $tournaments ) ) {
         return '<p class="us-empty">No tournaments scheduled yet.</p>';

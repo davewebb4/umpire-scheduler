@@ -38,7 +38,10 @@ function us_league_meta_cb( $post ) {
     }
     ?>
 
-    <?php $is_archived = get_post_meta( $post->ID, 'us_is_archived', true ) === '1'; ?>
+    <?php
+    $is_archived = get_post_meta( $post->ID, 'us_is_archived', true ) === '1';
+    $is_hidden   = get_post_meta( $post->ID, 'us_is_hidden',   true ) === '1';
+    ?>
     <table class="form-table">
 
         <!-- Archive toggle -->
@@ -52,6 +55,20 @@ function us_league_meta_cb( $post ) {
                     </strong>
                 </label>
                 <p class="description">All data (games, assignments, pay records) is preserved and still visible in pay reports. Use this for completed tournaments or inactive leagues.</p>
+            </td>
+        </tr>
+
+        <!-- Hidden-from-frontend toggle -->
+        <tr style="<?php echo $is_hidden ? 'background:#fffbf0;' : ''; ?>">
+            <th>Visibility</th>
+            <td>
+                <label>
+                    <input type="checkbox" name="us_is_hidden" value="1" <?php checked( $is_hidden ); ?>>
+                    <strong style="color:<?php echo $is_hidden ? '#b45309' : 'inherit'; ?>">
+                        Hide from umpire-facing pages
+                    </strong>
+                </label>
+                <p class="description">League remains fully visible in admin and allocator tools. Umpires will not see it in the schedule, home page, or league rules menu.</p>
             </td>
         </tr>
 
@@ -266,6 +283,7 @@ function us_save_league_meta( $post_id ) {
     update_post_meta( $post_id, 'us_admin_rate',     sanitize_text_field( $_POST['us_admin_rate']     ?? '' ) );
     update_post_meta( $post_id, 'us_is_tournament',  isset( $_POST['us_is_tournament'] ) ? '1' : '0' );
     update_post_meta( $post_id, 'us_is_archived',    isset( $_POST['us_is_archived'] )   ? '1' : '0' );
+    update_post_meta( $post_id, 'us_is_hidden',      isset( $_POST['us_is_hidden'] )     ? '1' : '0' );
     update_post_meta( $post_id, 'us_tourney_start',  sanitize_text_field( $_POST['us_tourney_start']  ?? '' ) );
     update_post_meta( $post_id, 'us_tourney_end',    sanitize_text_field( $_POST['us_tourney_end']    ?? '' ) );
     update_post_meta( $post_id, 'us_contact_name',   sanitize_text_field( $_POST['us_contact_name']   ?? '' ) );

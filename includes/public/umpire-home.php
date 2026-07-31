@@ -7,8 +7,8 @@ function us_shortcode_umpire_home() {
     $tagline   = us_setting( 'tagline' );
     $logo_url  = us_get_logo_url( 'medium' );
 
-    $leagues   = us_get_active_leagues( false );
-    $tourneys  = us_get_active_leagues( true );
+    $leagues   = us_get_active_leagues( false, true );
+    $tourneys  = us_get_active_leagues( true,  true );
     $has_tourney = ! empty( $tourneys );
 
     ob_start();

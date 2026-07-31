@@ -102,7 +102,8 @@ function us_get_umpire_by_user( $user_id ) {
 }
 
 // Get all non-archived leagues. Pass true for tournaments only, false for regular only, null for all.
-function us_get_active_leagues( $is_tournament = null ) {
+// Pass $exclude_hidden = true to also omit leagues marked hidden from umpire-facing pages.
+function us_get_active_leagues( $is_tournament = null, $exclude_hidden = false ) {
     $not_archived = [
         'relation' => 'OR',
         [ 'key' => 'us_is_archived', 'compare' => 'NOT EXISTS' ],
@@ -110,6 +111,14 @@ function us_get_active_leagues( $is_tournament = null ) {
     ];
 
     $meta_query = [ 'relation' => 'AND', $not_archived ];
+
+    if ( $exclude_hidden ) {
+        $meta_query[] = [
+            'relation' => 'OR',
+            [ 'key' => 'us_is_hidden', 'compare' => 'NOT EXISTS' ],
+            [ 'key' => 'us_is_hidden', 'value' => '1', 'compare' => '!=' ],
+        ];
+    }
 
     if ( $is_tournament === true ) {
         $meta_query[] = [ 'key' => 'us_is_tournament', 'value' => '1', 'compare' => '=' ];
