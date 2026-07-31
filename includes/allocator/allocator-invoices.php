@@ -437,7 +437,11 @@ function us_shortcode_allocator_invoices() {
         'orderby'     => 'title',
         'order'       => 'ASC',
         'post_status' => 'any',
-        'meta_query'  => [ [ 'key' => 'us_is_archived', 'value' => '1', 'compare' => '!=' ] ],
+        'meta_query'  => [
+            'relation' => 'OR',
+            [ 'key' => 'us_is_archived', 'compare' => 'NOT EXISTS' ],
+            [ 'key' => 'us_is_archived', 'value' => '1', 'compare' => '!=' ],
+        ],
     ] );
 
     $current_url = get_permalink();
