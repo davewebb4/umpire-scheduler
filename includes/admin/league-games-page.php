@@ -220,8 +220,9 @@ function us_league_games_page( $league ) {
                     $away      = get_post_meta( $game->ID, 'us_away_team',    true );
                     $field     = get_post_meta( $game->ID, 'us_field',        true );
                     $is_dh     = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
-                    $plate_uid = $asn_by_game[ $game->ID ]['plate'] ?? 0;
-                    $base_uid  = $asn_by_game[ $game->ID ]['base']  ?? 0;
+                    $g_status   = get_post_meta( $game->ID, 'us_game_status', true );
+                    $plate_uid  = $asn_by_game[ $game->ID ]['plate'] ?? 0;
+                    $base_uid   = $asn_by_game[ $game->ID ]['base']  ?? 0;
                     $plate_name = $plate_uid ? ( $umpire_name_map[ $plate_uid ] ?? get_the_title( $plate_uid ) ) : '';
                     $base_name  = $base_uid  ? ( $umpire_name_map[ $base_uid ]  ?? get_the_title( $base_uid ) )  : '';
                 ?>
@@ -238,8 +239,18 @@ function us_league_games_page( $league ) {
                             <span style="color:#999;font-size:12px">Standard</span>
                         <?php endif; ?>
                     </td>
-                    <td style="font-size:13px;"><?php echo $plate_name ? esc_html( $plate_name ) : '<span style="color:#bbb;">—</span>'; ?></td>
-                    <td style="font-size:13px;"><?php echo $base_name  ? esc_html( $base_name )  : '<span style="color:#bbb;">—</span>'; ?></td>
+                    <td style="font-size:13px;">
+                        <?php if ( $plate_name ) : ?>
+                            <?php echo esc_html( $plate_name ); ?>
+                        <?php elseif ( $g_status === 'cancelled' ) : ?>
+                            <span style="color:#b32d2e;font-size:12px;">Cancelled</span>
+                        <?php elseif ( $g_status === 'postponed' ) : ?>
+                            <span style="color:#e65100;font-size:12px;">Postponed</span>
+                        <?php else : ?>
+                            <span style="color:#999;font-size:12px;">Not assigned</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="font-size:13px;"><?php echo $base_name ? esc_html( $base_name ) : '<span style="color:#bbb;">—</span>'; ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
