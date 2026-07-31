@@ -20,6 +20,42 @@ function us_league_games_page( $league ) {
         ],
     ] );
 
+    // ── Invoice tally (one bulk assignment query for all games) ──
+    $tally = [ 'confirmed' => 0, 'pp_paid' => 0, 'postponed' => 0, 'unassigned' => 0, 'cancelled' => 0 ];
+    if ( ! empty( $all_games ) ) {
+        $all_game_ids      = wp_list_pluck( $all_games, 'ID' );
+        $tally_assignments = get_posts( [
+            'post_type'   => US_PT_ASSIGNMENT,
+            'numberposts' => -1,
+            'post_status' => 'publish',
+            'meta_query'  => [
+                [ 'key' => 'us_game_id', 'value' => $all_game_ids,                    'compare' => 'IN' ],
+                [ 'key' => 'us_status',  'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
+            ],
+        ] );
+        $games_confirmed = [];
+        $games_pp_paid   = [];
+        foreach ( $tally_assignments as $ta ) {
+            $gid = get_post_meta( $ta->ID, 'us_game_id', true );
+            $st  = get_post_meta( $ta->ID, 'us_status',  true );
+            if ( $st === 'postponed-paid' ) $games_pp_paid[ $gid ]   = true;
+            else                            $games_confirmed[ $gid ] = true;
+        }
+        foreach ( $all_games as $g ) {
+            $gid      = $g->ID;
+            $g_status = get_post_meta( $gid, 'us_game_status', true );
+            $has_c    = isset( $games_confirmed[ $gid ] );
+            $has_pp   = isset( $games_pp_paid[ $gid ] );
+            if ( $has_c  ) $tally['confirmed']++;
+            if ( $has_pp ) $tally['pp_paid']++;
+            if ( ! $has_c && ! $has_pp ) {
+                if ( $g_status === 'cancelled' )     $tally['cancelled']++;
+                elseif ( $g_status === 'postponed' ) $tally['postponed']++;
+                else                                 $tally['unassigned']++;
+            }
+        }
+    }
+
     $game_dates = [];
     foreach ( $all_games as $g ) {
         $d = get_post_meta( $g->ID, 'us_game_date', true );
@@ -104,6 +140,26 @@ function us_league_games_page( $league ) {
             </span>
             <a href="<?php echo admin_url( 'admin.php?page=us-ics-import' ); ?>" class="button">Import Schedule</a>
             <a href="<?php echo admin_url( 'post-new.php?post_type=' . US_PT_GAME ); ?>" class="button">Add Game</a>
+        </div>
+
+        <!-- Invoice tally strip -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:14px;font-size:12px;">
+            <span style="color:#888;font-weight:600;margin-right:2px;">Invoice tally:</span>
+            <?php if ( $tally['confirmed'] ) : ?>
+            <span style="background:#e8f5e9;color:#2e7d32;padding:2px 9px;border-radius:10px;font-weight:700;"><?php echo $tally['confirmed']; ?> confirmed</span>
+            <?php endif; ?>
+            <?php if ( $tally['pp_paid'] ) : ?>
+            <span style="background:#fff3e0;color:#e65100;padding:2px 9px;border-radius:10px;font-weight:700;"><?php echo $tally['pp_paid']; ?> postponed &middot; paid</span>
+            <?php endif; ?>
+            <?php if ( $tally['postponed'] ) : ?>
+            <span style="background:#fff8e1;color:#f57f17;padding:2px 9px;border-radius:10px;font-weight:700;"><?php echo $tally['postponed']; ?> postponed</span>
+            <?php endif; ?>
+            <?php if ( $tally['unassigned'] ) : ?>
+            <span style="background:#f0f0f0;color:#666;padding:2px 9px;border-radius:10px;font-weight:700;"><?php echo $tally['unassigned']; ?> unassigned</span>
+            <?php endif; ?>
+            <?php if ( $tally['cancelled'] ) : ?>
+            <span style="background:#fce8e8;color:#b32d2e;padding:2px 9px;border-radius:10px;font-weight:700;"><?php echo $tally['cancelled']; ?> cancelled</span>
+            <?php endif; ?>
         </div>
 
         <?php if ( empty( $game_dates ) ) : ?>
