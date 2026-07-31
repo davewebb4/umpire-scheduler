@@ -1122,49 +1122,20 @@ function us_shortcode_allocator_invoices() {
             <?php endif; ?>
 
             <?php
-                $inv_cancelled = $breakdown['cancelled'] ?? 0;
-                $inv_unbilled  = $breakdown['unbilled']  ?? [];
+                $inv_cancelled   = $breakdown['cancelled'] ?? 0;
+                $inv_unbilled    = $breakdown['unbilled']  ?? [];
+                $inv_unassigned  = count( array_filter( $inv_unbilled, fn( $r ) => ! $r['is_postponed'] ) );
+                $inv_postponed   = count( array_filter( $inv_unbilled, fn( $r ) =>   $r['is_postponed'] ) );
+                $inv_parts       = array_filter( [
+                    $inv_unassigned ? $inv_unassigned . ' unassigned'          : '',
+                    $inv_postponed  ? $inv_postponed  . ' postponed (not paid)': '',
+                    $inv_cancelled  ? $inv_cancelled  . ' cancelled'           : '',
+                ] );
             ?>
-            <?php if ( ! empty( $inv_unbilled ) || $inv_cancelled ) : ?>
-            <div style="margin:16px 0;padding:12px 16px;background:#f8f9fa;border-radius:5px;border:1px solid #eee;font-size:12px;color:#666;">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#aaa;margin-bottom:8px;">Not included in this invoice</div>
-                <?php if ( ! empty( $inv_unbilled ) ) : ?>
-                <table style="width:100%;border-collapse:collapse;font-size:12px;">
-                    <?php
-                        $ub_by_month = [];
-                        foreach ( $inv_unbilled as $ur ) {
-                            $ub_by_month[ $ur['month_key'] ][] = $ur;
-                        }
-                        ksort( $ub_by_month );
-                    ?>
-                    <?php foreach ( $ub_by_month as $umk => $urows ) : ?>
-                    <?php if ( count( $ub_by_month ) > 1 ) : ?>
-                    <tr>
-                        <td colspan="3" style="padding:5px 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#aaa;border-bottom:1px solid #e0e0e0;"><?php echo esc_html( date( 'F Y', strtotime( $umk . '-01' ) ) ); ?></td>
-                    </tr>
-                    <?php endif; ?>
-                    <?php foreach ( $urows as $ur ) : ?>
-                    <tr>
-                        <td style="padding:3px 10px 3px 0;white-space:nowrap;color:#aaa;width:60px;"><?php echo esc_html( date( 'M j', strtotime( $ur['date'] ) ) ); ?></td>
-                        <td style="padding:3px 10px 3px 0;">
-                            <?php echo esc_html( $ur['title'] ); ?>
-                            <?php if ( $ur['is_dh'] ) : ?><span style="background:#e8f4fd;color:#1a6396;font-size:9px;font-weight:700;padding:1px 4px;border-radius:2px;margin-left:3px;">DH</span><?php endif; ?>
-                        </td>
-                        <td style="padding:3px 0;white-space:nowrap;">
-                            <?php if ( $ur['is_postponed'] ) : ?>
-                            <span style="background:#fff3e0;color:#e65100;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;">Postponed</span>
-                            <?php else : ?>
-                            <span style="background:#f0f0f0;color:#999;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;">No umpires</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                    <?php endforeach; ?>
-                </table>
-                <?php endif; ?>
-                <?php if ( $inv_cancelled ) : ?>
-                <p style="margin:<?php echo ! empty( $inv_unbilled ) ? '8px' : '0'; ?> 0 0;color:#b32d2e;font-size:11px;"><?php echo $inv_cancelled; ?> cancelled game<?php echo $inv_cancelled !== 1 ? 's' : ''; ?> not shown — no charge</p>
-                <?php endif; ?>
+            <?php if ( $inv_parts ) : ?>
+            <div style="margin:12px 0;padding:10px 14px;background:#f8f9fa;border:1px solid #eee;border-radius:4px;font-size:12px;color:#888;line-height:1.6;">
+                <span style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#bbb;display:block;margin-bottom:3px;">Not included in this invoice</span>
+                <?php echo esc_html( implode( ' · ', $inv_parts ) ); ?> — no charge
             </div>
             <?php endif; ?>
 
