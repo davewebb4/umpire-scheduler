@@ -149,9 +149,19 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
             continue;
         }
 
-        $slot_count = count( $assignments );
-        $umpire_pay = 0.0;
+        // Deduplicate by position — only one slot per position (plate / base).
+        // Duplicate confirmed records can exist after reassignments and would
+        // otherwise inflate the slot count and umpire pay totals.
+        $by_position = [];
         foreach ( $assignments as $asn_id ) {
+            $pos = get_post_meta( $asn_id, 'us_position', true ) ?: 'plate';
+            if ( ! isset( $by_position[ $pos ] ) ) {
+                $by_position[ $pos ] = $asn_id;
+            }
+        }
+        $slot_count = count( $by_position );
+        $umpire_pay = 0.0;
+        foreach ( $by_position as $asn_id ) {
             $umpire_pay += floatval( get_post_meta( $asn_id, 'us_pay_amount', true ) );
         }
 
