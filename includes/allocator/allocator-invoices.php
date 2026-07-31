@@ -106,8 +106,9 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
         'meta_query'  => $meta_query,
     ] );
 
-    $rows          = [];
-    $unbilled_rows = [];
+    $rows            = [];
+    $unbilled_rows   = [];
+    $cancelled_count = 0;
     $totals = [
         'games'      => 0,
         'slots'      => 0,
@@ -137,7 +138,9 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
         ] );
         if ( ! $assignments ) {
             $game_status = get_post_meta( $game->ID, 'us_game_status', true );
-            if ( $game_status !== 'cancelled' ) {
+            if ( $game_status === 'cancelled' ) {
+                $cancelled_count++;
+            } else {
                 $unbilled_rows[] = [
                     'date'         => $game_date,
                     'month_key'    => $month_key,
@@ -219,11 +222,12 @@ function us_get_invoice_breakdown( $league_id, $months = [] ) {
     ksort( $by_rate );
 
     return [
-        'rows'     => $rows,
-        'unbilled' => $unbilled_rows,
-        'totals'   => $totals,
-        'rates'    => [ 'alloc' => $alloc_rate, 'admin' => $admin_rate ],
-        'by_rate'  => $by_rate,
+        'rows'      => $rows,
+        'unbilled'  => $unbilled_rows,
+        'cancelled' => $cancelled_count,
+        'totals'    => $totals,
+        'rates'     => [ 'alloc' => $alloc_rate, 'admin' => $admin_rate ],
+        'by_rate'   => $by_rate,
     ];
 }
 
@@ -811,10 +815,14 @@ function us_shortcode_allocator_invoices() {
         </div>
         <?php endif; ?>
 
-        <?php if ( ! empty( $breakdown['unbilled'] ) ) :
-            $unbilled_unassigned = array_filter( $breakdown['unbilled'], fn( $r ) => ! $r['is_postponed'] );
-            $unbilled_postponed  = array_filter( $breakdown['unbilled'], fn( $r ) =>   $r['is_postponed'] );
-            $unbilled_by_month   = [];
+        <?php
+            $unbilled_unassigned = ! empty( $breakdown['unbilled'] ) ? array_filter( $breakdown['unbilled'], fn( $r ) => ! $r['is_postponed'] ) : [];
+            $unbilled_postponed  = ! empty( $breakdown['unbilled'] ) ? array_filter( $breakdown['unbilled'], fn( $r ) =>   $r['is_postponed'] ) : [];
+            $cancelled_count     = $breakdown['cancelled'] ?? 0;
+            $has_not_included    = ! empty( $breakdown['unbilled'] ) || $cancelled_count > 0;
+        ?>
+        <?php if ( $has_not_included ) :
+            $unbilled_by_month = [];
             foreach ( $breakdown['unbilled'] as $ur ) {
                 $unbilled_by_month[ $ur['month_key'] ][] = $ur;
             }
@@ -829,6 +837,9 @@ function us_shortcode_allocator_invoices() {
                 <?php endif; ?>
                 <?php if ( count( $unbilled_postponed ) ) : ?>
                 <span style="background:#fff3e0;color:#e65100;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;"><?php echo count( $unbilled_postponed ); ?> postponed</span>
+                <?php endif; ?>
+                <?php if ( $cancelled_count ) : ?>
+                <span style="background:#fce8e8;color:#b32d2e;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;"><?php echo $cancelled_count; ?> cancelled</span>
                 <?php endif; ?>
             </summary>
             <div style="padding:14px 16px;">
@@ -873,6 +884,9 @@ function us_shortcode_allocator_invoices() {
                     </tbody>
                 </table>
                 </div>
+                <?php if ( $cancelled_count ) : ?>
+                <p style="margin:10px 0 0;font-size:12px;color:#b32d2e;"><?php echo $cancelled_count; ?> cancelled game<?php echo $cancelled_count !== 1 ? 's' : ''; ?> not shown — no charge.</p>
+                <?php endif; ?>
             </div>
         </details>
         <?php endif; ?>
