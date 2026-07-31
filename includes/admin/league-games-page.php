@@ -169,7 +169,34 @@ function us_league_games_page( $league ) {
             <button id="us-bulk-cancel" class="button" style="font-size:13px;">Cancel</button>
         </div>
 
-        <?php if ( $show_all ) : ?>
+        <?php if ( $show_all ) :
+            // Build umpire name map from already-fetched list
+            $umpire_name_map = [];
+            foreach ( $all_umpires as $u ) {
+                $umpire_name_map[ $u->ID ] = $u->post_title;
+            }
+
+            // Bulk-fetch confirmed assignments for this page's games in one query
+            $page_game_ids    = wp_list_pluck( $games, 'ID' );
+            $page_assignments = get_posts( [
+                'post_type'   => US_PT_ASSIGNMENT,
+                'numberposts' => -1,
+                'post_status' => 'publish',
+                'meta_query'  => [
+                    [ 'key' => 'us_game_id', 'value' => $page_game_ids,                    'compare' => 'IN' ],
+                    [ 'key' => 'us_status',  'value' => [ 'confirmed', 'postponed-paid' ], 'compare' => 'IN' ],
+                ],
+            ] );
+            $asn_by_game = [];
+            foreach ( $page_assignments as $asn ) {
+                $gid = get_post_meta( $asn->ID, 'us_game_id',   true );
+                $pos = get_post_meta( $asn->ID, 'us_position',  true );
+                $uid = get_post_meta( $asn->ID, 'us_umpire_id', true );
+                if ( $gid && $pos ) {
+                    $asn_by_game[ $gid ][ $pos ] = $uid;
+                }
+            }
+        ?>
 
         <!-- ── Simplified all-games table ───────────────────── -->
         <table class="wp-list-table widefat fixed striped" id="us-games-table">
@@ -179,18 +206,24 @@ function us_league_games_page( $league ) {
                     <th style="width:90px">Date</th>
                     <th style="width:80px">Time</th>
                     <th>Game</th>
-                    <th style="width:150px">Field</th>
-                    <th style="width:120px">Rate</th>
+                    <th style="width:130px">Field</th>
+                    <th style="width:100px">Rate</th>
+                    <th style="width:140px">Plate umpire</th>
+                    <th style="width:140px">Base umpire</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ( $games as $game ) :
-                    $g_date = get_post_meta( $game->ID, 'us_game_date', true );
-                    $g_time = get_post_meta( $game->ID, 'us_game_time', true );
-                    $home   = get_post_meta( $game->ID, 'us_home_team', true );
-                    $away   = get_post_meta( $game->ID, 'us_away_team', true );
-                    $field  = get_post_meta( $game->ID, 'us_field',     true );
-                    $is_dh  = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
+                    $g_date    = get_post_meta( $game->ID, 'us_game_date',    true );
+                    $g_time    = get_post_meta( $game->ID, 'us_game_time',    true );
+                    $home      = get_post_meta( $game->ID, 'us_home_team',    true );
+                    $away      = get_post_meta( $game->ID, 'us_away_team',    true );
+                    $field     = get_post_meta( $game->ID, 'us_field',        true );
+                    $is_dh     = get_post_meta( $game->ID, 'us_double_header', true ) === '1';
+                    $plate_uid = $asn_by_game[ $game->ID ]['plate'] ?? 0;
+                    $base_uid  = $asn_by_game[ $game->ID ]['base']  ?? 0;
+                    $plate_name = $plate_uid ? ( $umpire_name_map[ $plate_uid ] ?? get_the_title( $plate_uid ) ) : '';
+                    $base_name  = $base_uid  ? ( $umpire_name_map[ $base_uid ]  ?? get_the_title( $base_uid ) )  : '';
                 ?>
                 <tr>
                     <td><input type="checkbox" class="us-game-checkbox" value="<?php echo $game->ID; ?>"></td>
@@ -205,6 +238,8 @@ function us_league_games_page( $league ) {
                             <span style="color:#999;font-size:12px">Standard</span>
                         <?php endif; ?>
                     </td>
+                    <td style="font-size:13px;"><?php echo $plate_name ? esc_html( $plate_name ) : '<span style="color:#bbb;">—</span>'; ?></td>
+                    <td style="font-size:13px;"><?php echo $base_name  ? esc_html( $base_name )  : '<span style="color:#bbb;">—</span>'; ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
