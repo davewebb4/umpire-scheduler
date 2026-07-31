@@ -220,6 +220,7 @@ function us_ajax_send_invoice() {
     $month         = sanitize_text_field( $_POST['month']    ?? '' );
     $notes         = sanitize_textarea_field( $_POST['notes'] ?? '' );
     $override_rate = floatval( $_POST['override_rate'] ?? 0 );
+    $deposit       = floatval( $_POST['deposit']       ?? 0 );
 
     $league = get_post( $league_id );
     if ( ! $league ) wp_send_json_error( 'League not found' );
@@ -253,7 +254,7 @@ function us_ajax_send_invoice() {
     $from_email    = us_setting( 'assignor_email' );
 
     $subject = 'Invoice ' . $inv_num . ' — ' . $league->post_title . ' — ' . $period;
-    $body    = us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdown, $notes, $org_name, $assignor_name );
+    $body    = us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdown, $notes, $org_name, $assignor_name, $deposit );
     $headers = [
         'From: ' . ( $assignor_name ?: $org_name ) . ' <' . $from_email . '>',
         'Cc: '   . $from_email,
@@ -273,7 +274,7 @@ function us_ajax_send_invoice() {
 function us_invoice_mail_html_type() { return 'text/html'; }
 
 // ── Invoice email HTML ────────────────────────────────────────
-function us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdown, $notes, $org_name, $assignor_name ) {
+function us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdown, $notes, $org_name, $assignor_name, $deposit = 0.0 ) {
     $totals        = $breakdown['totals'];
     $rates         = $breakdown['rates'];
     $contact_name  = get_post_meta( $league->ID, 'us_contact_name',  true );
@@ -325,10 +326,27 @@ function us_invoice_email_html( $league, $inv_num, $inv_date, $period, $breakdow
           <td align="center" style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;"><?php echo intval( $totals['slots'] ); ?></td>
           <td align="right"  style="padding:12px 10px;font-size:14px;border-bottom:1px solid #eee;">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
         </tr>
+        <?php if ( $deposit > 0 ) :
+            $email_due = max( 0.0, $totals['grand'] - $deposit );
+        ?>
+        <tr>
+          <td colspan="2" align="right" style="padding:14px 10px 2px;font-size:12px;color:#aaa;">Invoice Total</td>
+          <td align="right" style="padding:14px 10px 2px;font-size:14px;color:#aaa;">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
+        </tr>
+        <tr>
+          <td colspan="2" align="right" style="padding:2px 10px;font-size:12px;color:#aaa;">Deposit Received</td>
+          <td align="right" style="padding:2px 10px;font-size:14px;color:#aaa;">&minus;$<?php echo number_format( $deposit, 2 ); ?></td>
+        </tr>
+        <tr>
+          <td colspan="2" align="right" style="padding:2px 10px 4px;font-size:13px;font-weight:bold;color:#091b33;">Amount Due</td>
+          <td align="right" style="padding:2px 10px 4px;font-size:20px;font-weight:bold;color:#091b33;">$<?php echo number_format( $email_due, 2 ); ?></td>
+        </tr>
+        <?php else : ?>
         <tr>
           <td colspan="2" align="right" style="padding:14px 10px 4px;font-size:13px;font-weight:bold;color:#091b33;">Total Due</td>
           <td align="right" style="padding:14px 10px 4px;font-size:20px;font-weight:bold;color:#091b33;">$<?php echo number_format( $totals['grand'], 2 ); ?></td>
         </tr>
+        <?php endif; ?>
       </table>
     </td>
   </tr>
@@ -398,6 +416,9 @@ function us_shortcode_allocator_invoices() {
     $inv_num       = sanitize_text_field( $_POST['us_inv_num'] ?? '' );
     $override_rate = isset( $_POST['us_inv_override_rate'] ) && $_POST['us_inv_override_rate'] !== ''
         ? floatval( $_POST['us_inv_override_rate'] )
+        : 0.0;
+    $deposit       = isset( $_POST['us_inv_deposit'] ) && $_POST['us_inv_deposit'] !== ''
+        ? floatval( $_POST['us_inv_deposit'] )
         : 0.0;
 
     $league        = $league_id ? get_post( $league_id ) : null;
@@ -851,8 +872,17 @@ function us_shortcode_allocator_invoices() {
                     <input type="number" id="us_inv_override_rate" name="us_inv_override_rate" min="0" step="0.01" placeholder="e.g. 46.00" style="width:130px;" value="">
                     <span style="font-size:13px;color:#888;">/ slot</span>
                 </div>
-                <p id="us-inv-override-preview" style="margin:8px 0 0;font-size:13px;color:#555;"></p>
             </div>
+
+            <div class="us-form-group" style="max-width:360px;">
+                <label for="us_inv_deposit">Deposit received <span style="font-weight:400;color:#999;">(optional)</span></label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:15px;color:#555;">$</span>
+                    <input type="number" id="us_inv_deposit" name="us_inv_deposit" min="0" step="0.01" placeholder="e.g. 200.00" style="width:130px;" value="">
+                </div>
+            </div>
+
+            <p id="us-inv-total-preview" style="margin:0 0 20px;font-size:13px;color:#555;"></p>
 
             <div class="us-form-group">
                 <label for="us_inv_notes">Notes <span style="font-weight:400;color:#999;">(optional — appears on the invoice)</span></label>
@@ -865,20 +895,34 @@ function us_shortcode_allocator_invoices() {
         <script>
         (function(){
             var overrideInput = document.getElementById('us_inv_override_rate');
-            var preview       = document.getElementById('us-inv-override-preview');
+            var depositInput  = document.getElementById('us_inv_deposit');
+            var preview       = document.getElementById('us-inv-total-preview');
             var slots         = <?php echo intval( $totals['slots'] ); ?>;
             var calcTotal     = <?php echo floatval( $totals['grand'] ); ?>;
 
             function updatePreview() {
-                var rate = parseFloat( overrideInput.value );
-                if ( overrideInput.value === '' || isNaN( rate ) || rate <= 0 ) {
-                    preview.innerHTML = 'Invoice total: <strong>$' + calcTotal.toFixed(2) + '</strong> <span style="color:#aaa;">(calculated)</span>';
+                var rate    = parseFloat( overrideInput.value );
+                var deposit = parseFloat( depositInput.value );
+                var total   = ( overrideInput.value !== '' && !isNaN( rate ) && rate > 0 )
+                    ? rate * slots
+                    : calcTotal;
+                var due     = ( depositInput.value !== '' && !isNaN( deposit ) && deposit > 0 )
+                    ? Math.max( 0, total - deposit )
+                    : total;
+
+                var parts = [];
+                if ( overrideInput.value !== '' && !isNaN( rate ) && rate > 0 ) {
+                    parts.push( 'Invoice total: <strong>$' + total.toFixed(2) + '</strong> <span style="color:#aaa;">(' + slots + ' slots &times; $' + rate.toFixed(2) + ')</span>' );
                 } else {
-                    var total = rate * slots;
-                    preview.innerHTML = 'Invoice total: <strong>$' + total.toFixed(2) + '</strong> <span style="color:#aaa;">(' + slots + ' slots &times; $' + rate.toFixed(2) + ' override)</span>';
+                    parts.push( 'Invoice total: <strong>$' + total.toFixed(2) + '</strong>' );
                 }
+                if ( depositInput.value !== '' && !isNaN( deposit ) && deposit > 0 ) {
+                    parts.push( 'Amount due: <strong>$' + due.toFixed(2) + '</strong> <span style="color:#aaa;">(after $' + deposit.toFixed(2) + ' deposit)</span>' );
+                }
+                preview.innerHTML = parts.join( ' &nbsp;·&nbsp; ' );
             }
             overrideInput.addEventListener('input', updatePreview);
+            depositInput.addEventListener('input', updatePreview);
             updatePreview();
         })();
         </script>
@@ -893,6 +937,7 @@ function us_shortcode_allocator_invoices() {
             $show_alloc    = $rates['alloc'] > 0;
             $show_admin    = $rates['admin'] > 0;
             $invoice_total = $override_rate > 0 ? round( $override_rate * $totals['slots'], 2 ) : $totals['grand'];
+            $amount_due    = $deposit > 0 ? max( 0.0, $invoice_total - $deposit ) : $invoice_total;
 
             if ( $is_tournament ) {
                 $t_start = get_post_meta( $league_id, 'us_tourney_start', true );
@@ -922,7 +967,8 @@ function us_shortcode_allocator_invoices() {
                         data-period="<?php echo esc_attr( $period ); ?>"
                         data-month="<?php echo esc_attr( $month ); ?>"
                         data-notes="<?php echo esc_attr( $notes ); ?>"
-                        data-override="<?php echo esc_attr( $override_rate > 0 ? $override_rate : '' ); ?>">
+                        data-override="<?php echo esc_attr( $override_rate > 0 ? $override_rate : '' ); ?>"
+                        data-deposit="<?php echo esc_attr( $deposit > 0 ? $deposit : '' ); ?>">
                     &#9993; Email to <?php echo esc_html( $contact_name ?: $contact_email ); ?>
                 </button>
             <?php endif; ?>
@@ -987,10 +1033,25 @@ function us_shortcode_allocator_invoices() {
                     </tr>
                 </tbody>
                 <tfoot>
+                    <?php if ( $deposit > 0 ) : ?>
+                    <tr>
+                        <td colspan="2" class="us-invoice-doc__total-label" style="font-weight:400;font-size:13px;color:#888;">Invoice Total</td>
+                        <td class="us-invoice-doc__total-amt" style="font-size:14px;color:#888;">$<?php echo number_format( $invoice_total, 2 ); ?></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="us-invoice-doc__total-label" style="font-weight:400;font-size:13px;color:#888;">Deposit Received</td>
+                        <td class="us-invoice-doc__total-amt" style="font-size:14px;color:#888;">&minus;$<?php echo number_format( $deposit, 2 ); ?></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="us-invoice-doc__total-label">Amount Due</td>
+                        <td class="us-invoice-doc__total-amt">$<?php echo number_format( $amount_due, 2 ); ?></td>
+                    </tr>
+                    <?php else : ?>
                     <tr>
                         <td colspan="2" class="us-invoice-doc__total-label">Total Due</td>
                         <td class="us-invoice-doc__total-amt">$<?php echo number_format( $invoice_total, 2 ); ?></td>
                     </tr>
+                    <?php endif; ?>
                 </tfoot>
             </table>
 
@@ -1045,6 +1106,7 @@ function us_shortcode_allocator_invoices() {
             <input type="hidden" name="us_inv_notes"         value="<?php echo esc_attr( $notes ); ?>">
             <input type="hidden" name="us_inv_num"           value="<?php echo esc_attr( $inv_num ); ?>">
             <input type="hidden" name="us_inv_override_rate" value="<?php echo esc_attr( $override_rate > 0 ? $override_rate : '' ); ?>">
+            <input type="hidden" name="us_inv_deposit"       value="<?php echo esc_attr( $deposit > 0 ? $deposit : '' ); ?>">
         </form>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1089,6 +1151,7 @@ function us_shortcode_allocator_invoices() {
                             month:         btn.dataset.month,
                             notes:         btn.dataset.notes,
                             override_rate: btn.dataset.override || '',
+                            deposit:       btn.dataset.deposit || '',
                         }),
                     })
                     .then( function(r) { return r.json(); } )
